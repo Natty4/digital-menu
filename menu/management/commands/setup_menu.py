@@ -38,7 +38,7 @@ class Command(BaseCommand):
             for cat_data in categories_data:
                 category, created = Category.objects.get_or_create(
                     name__iexact=cat_data['name'],  # Case-insensitive lookup
-                    defaults={'name': cat_data['name'], 'icon': cat_data['icon']}
+                    defaults={'name': cat_data['name']}
                 )
                 if created:
                     self.stdout.write(self.style.SUCCESS(f"Category '{cat_data['name']}' created"))
