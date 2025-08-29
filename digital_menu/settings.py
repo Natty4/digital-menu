@@ -11,8 +11,8 @@ import dj_database_url
 load_dotenv('.env')
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-e5y*+0*%uie-te#&v)w+ht_j!z-5r8pjrmhtrr%mb!jm(518vu')
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-e5y*+0*%uie-te#&v)w+ht_j!z-5r8pjrmhtrr%mb!jm(518vu')
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
 
@@ -145,4 +145,6 @@ cloudinary_config = {
 }
 
 config(**cloudinary_config)
+
+SUPERUSER_PASSWORD = os.getenv('SUPERUSER_PASSWORD', 'admin')
 

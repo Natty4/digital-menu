@@ -1,14 +1,18 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from menu.models import Category, MenuItem
+
 
 class Command(BaseCommand):
     help = 'Setup initial menu data and admin user'
 
     def handle(self, *args, **options):
+        password = settings.SUPERUSER_PASSWORD
         # Create admin user if not exists
         if not User.objects.filter(username='admin').exists():
-            User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+            
+            User.objects.create_superuser('admin', 'admin@sonictechs.com', password)
             self.stdout.write(self.style.SUCCESS('Admin user created'))
         
         # Create categories
