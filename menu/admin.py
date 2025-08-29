@@ -1,6 +1,17 @@
 from django.contrib import admin
 from .models import Category, MenuItem, Order, OrderItem, QRCode
 
+
+# Site header (top of the page)
+admin.site.site_header = "TK-Brown Admin"
+
+# Site title (HTML <title>)
+admin.site.site_title = "TK-Brown Admin Portal V.1.0"
+
+# Iindex title (dashboard welcome text)
+admin.site.index_title = "Welcome to TK-Brown Administration"
+
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name']

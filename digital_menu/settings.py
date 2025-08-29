@@ -11,8 +11,8 @@ import dj_database_url
 load_dotenv('.env')
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = os.getenv('DEBUG', default=False)
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-e5y*+0*%uie-te#&v)w+ht_j!z-5r8pjrmhtrr%mb!jm(518vu')
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     
     # Third party apps
@@ -67,16 +68,16 @@ WSGI_APPLICATION = "digital_menu.wsgi.application"
 
 
 # Database
-if DEBUG:
+if not DEBUG:
+    DATABASES = {
+        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'), conn_max_age=600, ssl_require=True)
+    }
+else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
         }
-    }
-else:
-    DATABASES = {
-        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'), conn_max_age=600, ssl_require=True)
     }
 
 
@@ -100,13 +101,16 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Addis_Ababa'  #"UTC"
 USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -141,3 +145,4 @@ cloudinary_config = {
 }
 
 config(**cloudinary_config)
+

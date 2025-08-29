@@ -1,0 +1,53 @@
+{% extends "menu/base.html" %}
+{% load static %}
+
+{% block title %}
+    Access Denied
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        h1 {
+            font-size: 60px;
+            color: #5b3a29;
+        }
+        p {
+            font-size: 20px;
+        }
+        .error-card {
+            padding: 10px 20px;
+            margin: 20px 10px;
+            max-width: 100%;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        .branding {
+            margin-top: 40px;
+            font-size: 15px;
+            color: #555;
+        }
+        .branding img {
+            height: 50px;
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="error-card">
+            <h1>403</h1>
+            <h3>Access Denied</h3>
+            <p>You do not have permission to access this page.</p>
+            <p><a href="/">Go back to the homepage</a></p>
+
+            <div class="branding">
+                <img src="{% static 'images/logo.png' %}" alt="Sonic Tech Logo">
+                <p><strong>Sonic Tech Solutions</strong></p>
+                <p>Need help? Contact us at <a href="mailto:natty7kt@gmail.com">support@TKBrown.com</a></p>
+                <p>or call <strong>+251 924 325 817</strong></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
