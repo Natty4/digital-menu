@@ -1,5 +1,8 @@
 import os
 import qrcode
+import logging
+import requests
+import cloudinary.uploader
 from io import BytesIO
 from PIL import Image
 from django.conf import settings
@@ -20,6 +23,7 @@ from api.serializers import (
     OrderCreateSerializer, QRCodeSerializer, QRCodeCreateSerializer
 )
 
+logger = logging.getLogger(__name__)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -91,23 +95,25 @@ class QRCodeViewSet(viewsets.ModelViewSet):
         return QRCodeSerializer
 
     def list(self, request):
-        # Optionally, you can apply filtering here (e.g., filter by active status)
         qr_codes = QRCode.objects.all().order_by('-created_at')
         serializer = QRCodeSerializer(qr_codes, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['post'])
     def generate(self, request):
         serializer = QRCodeCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            table_number = serializer.validated_data['table_number']
-            qr_color = serializer.validated_data.get('qr_color', '#000000')
-            logo = serializer.validated_data.get('logo')
-            
+        if not serializer.is_valid():
+            return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        table_number = serializer.validated_data['table_number']
+        qr_color = serializer.validated_data.get('qr_color', '#000000')
+        logo = serializer.validated_data.get('logo')  # Optional logo file
+
+        try:
             # Generate UUID and URL
-            qr_uuid = QRCode.make_uuid()  # Generate the UUID using the model method
+            qr_uuid = QRCode.make_uuid()
             frontend_url = f"{settings.FRONTEND_URL}?table_uuid={qr_uuid}"
-            
+
             # Create the QR code instance
             qr_code = QRCode.objects.create(
                 uuid=qr_uuid,
@@ -115,9 +121,32 @@ class QRCodeViewSet(viewsets.ModelViewSet):
                 qr_color=qr_color
             )
 
-            # Handle logo upload if provided
+            # Handle logo upload to Cloudinary if provided
             if logo:
-                qr_code.logo_image.save(logo.name, logo, save=True)
+                try:
+                    # Validate file type
+                    valid_formats = ['image/png', 'image/jpeg', 'image/jpg']
+                    if logo.content_type not in valid_formats:
+                        return Response(
+                            {"detail": "Logo must be a PNG or JPEG image."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    # Upload logo to Cloudinary
+                    upload_result = cloudinary.uploader.upload(
+                        logo,
+                        folder='qr_logos',
+                        resource_type='image'
+                    )
+                    # Save the Cloudinary public ID to logo_image field
+                    qr_code.logo_image = upload_result['public_id']
+                    qr_code.save()
+                except Exception as e:
+                    logger.error(f"Error uploading logo to Cloudinary: {str(e)}")
+                    return Response(
+                        {"detail": f"Failed to upload logo: {str(e)}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
             # Generate the QR code image
             qr = qrcode.QRCode(
@@ -134,26 +163,52 @@ class QRCodeViewSet(viewsets.ModelViewSet):
 
             # Add the logo if available
             if qr_code.logo_image:
-                logo_img = Image.open(qr_code.logo_image)
-                logo_size = min(qr_img.size) // 4
-                logo_img = logo_img.resize((logo_size, logo_size), Image.LANCZOS)
+                try:
+                    # Fetch the logo image from Cloudinary
+                    logo_url = cloudinary.utils.cloudinary_url(qr_code.logo_image)[0]
+                    logo_response = requests.get(logo_url)
+                    logo_img = Image.open(BytesIO(logo_response.content))
+                    logo_size = min(qr_img.size) // 4
+                    logo_img = logo_img.resize((logo_size, logo_size), Image.LANCZOS)
+                    pos = ((qr_img.size[0] - logo_size) // 2, (qr_img.size[1] - logo_size) // 2)
+                    qr_img.paste(logo_img, pos)
+                except Exception as e:
+                    logger.error(f"Error processing logo image: {str(e)}")
+                    return Response(
+                        {"detail": f"Failed to process logo: {str(e)}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-                # Calculate position to center the logo on the QR code
-                pos = ((qr_img.size[0] - logo_size) // 2, (qr_img.size[1] - logo_size) // 2)
-
-                # Paste the logo on the QR code
-                qr_img.paste(logo_img, pos)
-
-            # Save the generated QR code image
-            buffer = BytesIO()
-            qr_img.save(buffer, format='PNG')
-            qr_code.image.save(f'qr_{table_number}.png', ContentFile(buffer.getvalue()), save=True)
+            # Save QR code image to Cloudinary
+            try:
+                buffer = BytesIO()
+                qr_img.save(buffer, format='PNG')
+                buffer.seek(0)
+                upload_result = cloudinary.uploader.upload(
+                    buffer,
+                    folder='qr_codes',
+                    resource_type='image'
+                )
+                qr_code.image = upload_result['public_id']
+                qr_code.save()
+            except Exception as e:
+                logger.error(f"Error uploading QR code to Cloudinary: {str(e)}")
+                return Response(
+                    {"detail": f"Failed to save QR code image: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             # Serialize the response
             response_serializer = QRCodeSerializer(qr_code, context={'request': request})
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Unexpected error in generate QR code: {str(e)}")
+            return Response(
+                {"detail": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
 
 @api_view(['GET'])
 @permission_classes([AllowAny])

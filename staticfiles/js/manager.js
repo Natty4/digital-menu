@@ -306,50 +306,67 @@ class ManagerDashboard {
   }
 
   async generateQRCode() {
-    const tableNumber = document.getElementById("table-number").value
-    const qrColor = document.getElementById("qr-color").value
-    const logoFile = document.getElementById("logo-upload").files[0]
-    
+    const tableNumber = document.getElementById("table-number").value;
+    const qrColor = document.getElementById("qr-color").value;
+    const logoFile = document.getElementById("logo-upload").files[0];
+
     if (!tableNumber) {
-      this.showToast('Please enter a table number/name');
-      return
+        this.showToast('Please enter a table number/name', 'error');
+        return;
     }
-    
-    const formData = new FormData()
-    formData.append('table_number', tableNumber)
-    formData.append('qr_color', qrColor)
-    
+
+    // Validate logo file type and size
     if (logoFile) {
-      formData.append('logo', logoFile)
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!validTypes.includes(logoFile.type)) {
+            this.showToast('Logo must be a PNG or JPEG image.', 'error');
+            return;
+        }
+        if (logoFile.size > 1_000_000) { // Max 1MB
+            this.showToast('Logo file size must be less than 1MB.', 'error');
+            return;
+        }
     }
-    
+
+    const formData = new FormData();
+    formData.append('table_number', tableNumber);
+    formData.append('qr_color', qrColor);
+
+    if (logoFile) {
+        formData.append('logo', logoFile);
+    }
+
     const options = {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${this.authToken}`
-      },
-      body: formData
-    }
-    
+        method: 'POST',
+        headers: {
+            'Authorization': `Token ${this.authToken}`
+        },
+        body: formData
+    };
+
     // Remove Content-Type header for FormData
-    delete options.headers['Content-Type']
-    
-    const data = await this.apiCall('/qr_codes/generate/', options)
-    
-    if (data) {
-      // Show success message
-      this.showToast(`QR code generated successfully for ${tableNumber}!`, 'success')
-      
-     this.fetchQRCodeList()
-      
-      // Reset form
-      document.getElementById("table-number").value = ""
-      document.getElementById("logo-upload").value = ""
-      document.getElementById("logo-preview").classList.add("hidden")
-      this.logoSrc = null
-      this.updateQRPreview()
+    delete options.headers['Content-Type'];
+
+    try {
+        const data = await this.apiCall('/qr_codes/generate/', options);
+
+        if (data) {
+            // Show success message
+            this.showToast(`QR code generated successfully for ${tableNumber}!`, 'success');
+            this.fetchQRCodeList();
+
+            // Reset form
+            document.getElementById("table-number").value = "";
+            document.getElementById("logo-upload").value = "";
+            document.getElementById("logo-preview").classList.add("hidden");
+            this.logoSrc = null;
+            this.updateQRPreview();
+        }
+    } catch (error) {
+        console.error("Error generating QR Code:", error);
+        this.showToast("Failed to generate QR code. Please try again.", "error");
     }
-  }
+}
 
   // Fetch generated QR codes from the API and display them
   async fetchQRCodeList() {

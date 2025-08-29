@@ -118,7 +118,14 @@ class QRCodeSerializer(serializers.ModelSerializer):
 
 class QRCodeCreateSerializer(serializers.ModelSerializer):
     logo = serializers.ImageField(write_only=True, required=False)
-    
+
+    def validate_logo(self, value):
+        if value:
+            # Validate file size (e.g., max 1MB)
+            if value.size > 1_000_000:
+                raise serializers.ValidationError("Logo file size must be less than 1MB.")
+        return value
+
     class Meta:
         model = QRCode
         fields = ['table_number', 'qr_color', 'logo']
