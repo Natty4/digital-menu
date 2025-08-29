@@ -10,4 +10,5 @@ python-dotenv==1.1.1
 qrcode==8.2
 psycopg2==2.9.10
 whitenoise==6.9.0
+gunicorn==23.0.0
 
