@@ -153,10 +153,13 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  min-height: 80vh;
   max-height: 80vh; /* Allows the menu grid to scroll */
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding-bottom: 1rem;
+  align-items: start;
 }
 
 .menu-grid::-webkit-scrollbar {
@@ -1473,10 +1476,11 @@ select {
 
 /* Search Bar Styles */
 .search-bar-container {
+    position: relative;
     display: flex;
     justify-content: center;
     margin-top: 5px !important;
-    padding: 0 0.5rem;
+    padding: 0 0.5rem 1rem 0.5rem;
     max-width: 448px;   
     width: 100%;       
     margin: 0 auto;     
