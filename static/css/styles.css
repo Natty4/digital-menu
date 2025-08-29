@@ -1,4 +1,3 @@
-/* Reset and base styles */
 * {
   margin: 0;
   padding: 0;
@@ -23,11 +22,24 @@
   --radius: 0.5rem;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  min-height: 100%; /* Ensures body is at least as tall as the viewport */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column; /* Allows body to grow with content */
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: linear-gradient(135deg, var(--background) 0%, var(--muted) 100%);
   color: var(--foreground);
-  min-height: 100vh;
   line-height: 1.6;
 }
 
@@ -35,7 +47,15 @@ body {
   max-width: 448px;
   margin: 0 auto;
   padding: 0 1rem;
+  flex-grow: 1; 
 }
+
+.main-content {
+  max-height: calc(100vh - 13rem); 
+  overflow-y: auto;
+  padding: 1.5rem 1rem 1rem;
+}
+
 
 /* Header */
 .header {
@@ -128,15 +148,19 @@ body {
   box-shadow: 0 8px 24px rgba(91, 58, 41, 0.3);
 }
 
-/* Main Content */
-.main-content {
-  padding: 1.5rem 1rem 8rem;
-}
 
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  max-height: 80vh; /* Allows the menu grid to scroll */
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.menu-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .menu-item {
@@ -259,9 +283,9 @@ body {
 /* Cart Button */
 .cart-button {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 50;
+  bottom: 1.5rem;  /* distance from the bottom */
+  right: 1.5rem;   /* distance from the right */
+  z-index: 50;     /* make sure it stays above other content */
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
@@ -277,14 +301,17 @@ body {
   align-items: center;
 }
 
+/* Cart Button Hover */
 .cart-button:hover {
   transform: scale(1.1);
 }
 
+/* Cart Icon */
 .cart-icon {
   font-size: 1.5rem;
 }
 
+/* Cart Badge (notification) */
 .cart-badge {
   position: absolute;
   top: -0.5rem;
@@ -301,7 +328,8 @@ body {
   font-weight: 600;
 }
 
-/* Modal */
+
+
 /* Modal */
 .modal {
   position: fixed;
@@ -314,6 +342,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  height: 100%; 
 }
 
 .modal-content {
@@ -1448,9 +1477,9 @@ select {
     justify-content: center;
     margin-top: 5px !important;
     padding: 0 0.5rem;
-    position: relative;
-    max-width: 448px;
-    margin: 0 auto;
+    max-width: 448px;   
+    width: 100%;       
+    margin: 0 auto;     
 }
 
 .search-bar {
@@ -1465,6 +1494,7 @@ select {
 .search-bar:focus {
     outline: none;
     border-color: var(--primary);
+    box-shadow: 0 8px 32px rgba(91, 58, 41, 0.1);
 }
 
 .clear-search {
@@ -1490,5 +1520,5 @@ select {
     color: var(--muted-foreground);
     padding: 1rem;
     font-weight: bold;
-    grid-column: span 2; /* Adjust depending on how many columns your grid has */
+    grid-column: span 2; 
 }
