@@ -11,11 +11,10 @@ class Command(BaseCommand):
         password = settings.SUPERUSER_PASSWORD
         # Create admin user if not exists
         if not User.objects.filter(username='admin').exists():
-            
             User.objects.create_superuser('admin', 'admin@sonictechs.com', password)
             self.stdout.write(self.style.SUCCESS('Admin user created'))
-        
-        # Create categories
+
+        # Create categories if they don't exist
         categories_data = [
             {'name': 'Starters', 'icon': '🥗'},
             {'name': 'Mains', 'icon': '🥩'},
@@ -25,11 +24,13 @@ class Command(BaseCommand):
         ]
         
         for cat_data in categories_data:
-            Category.objects.get_or_create(name=cat_data['name'])
-        
-        self.stdout.write(self.style.SUCCESS('Categories created'))
-        
-        # Create sample menu items
+            category, created = Category.objects.get_or_create(name=cat_data['name'], defaults={'icon': cat_data['icon']})
+            if created:
+                self.stdout.write(self.style.SUCCESS(f"Category '{cat_data['name']}' created"))
+            else:
+                self.stdout.write(self.style.SUCCESS(f"Category '{cat_data['name']}' already exists"))
+
+        # Create sample menu items if they don't exist
         menu_items_data = [
             {
                 'name': 'Injera',
@@ -91,7 +92,7 @@ class Command(BaseCommand):
         
         for item_data in menu_items_data:
             category = Category.objects.get(name=item_data['category'])
-            MenuItem.objects.get_or_create(
+            menu_item, created = MenuItem.objects.get_or_create(
                 name=item_data['name'],
                 defaults={
                     'description': item_data['description'],
@@ -100,5 +101,9 @@ class Command(BaseCommand):
                     'is_available': item_data['is_available'],
                 }
             )
+            if created:
+                self.stdout.write(self.style.SUCCESS(f"Menu item '{item_data['name']}' created"))
+            else:
+                self.stdout.write(self.style.SUCCESS(f"Menu item '{item_data['name']}' already exists"))
         
-        self.stdout.write(self.style.SUCCESS('Menu items created'))
+        self.stdout.write(self.style.SUCCESS('Menu setup completed'))

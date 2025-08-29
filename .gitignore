@@ -16,6 +16,7 @@ env.bak/
 
 venv.bak/
 
+media/*
 
 # Django stuff:
 
