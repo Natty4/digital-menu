@@ -13,10 +13,10 @@ class ManagerDashboard {
     this.authToken = localStorage.getItem('managerToken')
     
     
-    // if (!this.authToken) {
-    //   window.location.href = '/'
-    //   return
-    // }
+    if (!this.authToken) {
+      window.location.href = '/'
+      return
+    }
     this.init()
   }
 
@@ -228,7 +228,7 @@ class ManagerDashboard {
       };
     }
 
-    async deleteItem(itemId) {
+  async deleteItem(itemId) {
       this.showConfirmationModal(
         "Are you sure you want to delete this item?", 
         async () => {
@@ -352,7 +352,7 @@ class ManagerDashboard {
   }
 
   // Fetch generated QR codes from the API and display them
-    async fetchQRCodeList() {
+  async fetchQRCodeList() {
       try {
           const data = await this.apiCall('/qr_codes/');
           if (data) {
@@ -430,7 +430,6 @@ printQRCode(url) {
         document.getElementById(`${sectionName}-section`).classList.add("active")
 
         this.currentSection = sectionName
-        
         // Refresh data when switching to orders section
         if (sectionName === 'orders') {
           this.fetchOrders()
