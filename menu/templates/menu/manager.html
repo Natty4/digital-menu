@@ -1,0 +1,221 @@
+{% extends "menu/base.html" %}
+{% load static %}
+
+{% block title %}Manager Dashboard - TK-Brown Coffee 🍵{% endblock %}
+
+{% block header %}
+{% endblock %}
+{% block content %}
+    <!-- Manager Dashboard -->
+    <div class="manager-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="manager-sidebar">
+            <div class="sidebar-header">
+                <h2>TK-Brown Coffee🍵</h2>
+                <p>Manager Dashboard</p>
+            </div>
+            <div class="sidebar-nav">
+                <button class="nav-item active" data-section="menu">
+                    <span class="nav-icon"><i class="fas fa-utensils"></i></span>
+                    <span class="nav-label">Menu</span>
+                </button>
+                <button class="nav-item" data-section="categories">
+                    <span class="nav-icon"><i class="fas fa-th-large"></i></span>
+                    <span class="nav-label">Categories</span>
+                </button>
+                <button class="nav-item" data-section="qr">
+                    <span class="nav-icon"><i class="fas fa-qrcode"></i></span>
+                    <span class="nav-label">QR Codes</span>
+                </button>
+                <button class="nav-item" data-section="orders">
+                    <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
+                    <span class="nav-label">Orders</span>
+                </button>
+            </div>
+            <div class="sidebar-footer">
+                <button id="back-to-menu" class="btn btn-outline btn-sm">← Back to Menu</button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="manager-main">
+            <!-- Menu Management Section -->
+            <div id="menu-section" class="manager-section active">
+                <div class="section-header">
+                    <h1>Menu Management</h1>
+                    <button id="add-menu-item" class="btn btn-primary">+ Add New Item</button>
+                </div>
+                
+                <div class="menu-table-container">
+                    <table class="menu-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Price</th>
+                                <th>Category</th>
+                                <th>Available</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="menu-table-body">
+                            <!-- Menu items will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Categories Management Section -->
+            <div id="categories-section" class="manager-section">
+                <div class="section-header">
+                    <h1>Category Management</h1>
+                    <button id="add-category-btn" class="btn btn-primary">+ Add New Category</button>
+                </div>
+                
+                <div class="category-table-container">
+                    <table class="category-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="category-table-body">
+                            <!-- Categories will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- QR Code Generation Section -->
+            <div id="qr-section" class="manager-section">
+                <div class="section-header">
+                    <h1>QR Code Generator</h1>
+                </div>
+                
+                <div class="qr-generator">
+                    <div class="qr-controls">
+                        <div class="form-group">
+                            <label for="table-number">Table Number/Name</label>
+                            <input type="text" id="table-number" placeholder="Table 1" required/>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="logo-upload">Branding Image Upload</label>
+                            <input type="file" id="logo-upload" accept="image/*" />
+                            <div id="logo-preview" class="logo-preview hidden">
+                                <img id="logo-img" src="" alt="Logo preview" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="qr-color">QR Code Color</label>
+                            <input type="color" id="qr-color" value="#8B4513" />
+                        </div>
+                        
+                        <button id="generate-qr" class="btn btn-primary">Generate & Download QR</button>
+                    </div>
+                    
+                    <div class="qr-preview">
+                        <h3>Preview</h3>
+                        <div id="qr-code-container" class="qr-code-container">
+                            <canvas id="qr-canvas" width="300" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- List of Generated QR Codes -->
+                <div class="qr-codes">
+                    <h3>Generated QR Codes</h3>
+                    <div id="qr-codes-list" class="qr-codes-list"></div>
+                </div>
+            </div>
+
+            <!-- Order Management Section -->
+            <div id="orders-section" class="manager-section">
+                <div class="section-header">
+                    <h1>Order Management</h1>
+                    <div class="order-stats">
+                        <span class="stat">Active Orders: <strong id="active-orders-count">0</strong></span>
+                        <span class="stat">Today's Sales: <strong id="todays-revenue">ETB0</strong></span>
+                    </div>
+                </div>
+                
+                <div id="orders-container" class="orders-container">
+                    <!-- Order cards will be populated by JavaScript -->
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Add/Edit Menu Item Modal -->
+    <div id="menu-item-modal" class="modal hidden">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2 id="menu-item-modal-title">Add New Item</h2>
+                <button id="menu-item-modal-close" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="item-name-input">Item Name</label>
+                        <input type="text" id="item-name-input" placeholder="Enter item name" />
+                    </div>
+                    <div class="form-group">
+                        <label for="item-price-input">Price (ETB)</label>
+                        <input type="number" id="item-price-input" placeholder="0.00" step="0.01" min="1" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="item-description-input">Description</label>
+                        <textarea id="item-description-input" placeholder="Enter item description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-category-input">Category</label>
+                        <select id="item-category-input">
+                            <!-- Options populated by JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-image-input">Item Image</label>
+                        <input type="file" id="item-image-input" accept="image/*" />
+                        <div id="item-image-preview" class="image-preview hidden">
+                            <img id="item-preview-img" src="" alt="Item preview" />
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="item-available-input" checked /> Available
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-menu-item" class="btn btn-primary">Save Item</button>
+                <button id="cancel-menu-item" class="btn btn-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div id="category-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="category-modal-title">Add New Category</h2>
+                <button id="category-modal-close" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="category-name-input">Category Name</label>
+                    <input type="text" id="category-name-input" placeholder="Enter category name" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-category" class="btn btn-primary">Save Category</button>
+                <button id="cancel-category" class="btn btn-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    <script src="{% static 'js/manager.js' %}"></script>
+{% endblock %}
