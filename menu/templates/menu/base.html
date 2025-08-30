@@ -27,27 +27,27 @@
     <link rel="canonical" href="https://www.tkbrowncoffee.com">
     <!-- Structured Data (JSON-LD) for Restaurant -->
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Restaurant",
-        "name": "TK-Brown Coffee",
-        "description": "TK-Brown Coffee offers a premium coffee and dining experience in Hawassa. Browse our digital menu and order online.",
-        "url": "https://www.tkbrowncoffee.com",
-        "address": {
-            "@type": "PostalAddress",
-            "streetAddress": "Infront of Hawassa University",
-            "addressLocality": "Hawassa",
-            "addressCountry": "ET"
-        },
-        "servesCuisine": ["Coffee", "Ethiopian", "International"],
-        "menu": "https://www.tkbrowncoffee.com/menu",
-        "telephone": "+251-924-325-817",
-        "openingHours": [
-            "Mo-Fr 07:00-22:00",
-            "Sa-Su 08:00-22:00"
-        ],
-        "image": "{% static 'images/coffee-shop.jpg' %}"
-    }
+        {
+            "@context": "https://schema.org",
+            "@type": "Restaurant",
+            "name": "TK-Brown Coffee",
+            "description": "TK-Brown Coffee offers a premium coffee and dining experience in Hawassa. Browse our digital menu and order online.",
+            "url": "https://www.tkbrowncoffee.com",
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Infront of Hawassa University",
+                "addressLocality": "Hawassa",
+                "addressCountry": "ET"
+            },
+            "servesCuisine": ["Coffee", "Ethiopian", "International"],
+            "menu": "https://www.tkbrowncoffee.com/menu",
+            "telephone": "+251-924-325-817",
+            "openingHours": [
+                "Mo-Fr 07:00-22:00",
+                "Sa-Su 08:00-22:00"
+            ],
+            "image": "{% static 'images/coffee-shop.jpg' %}"
+        }
     </script>
     <link rel="stylesheet" href="{% static 'css/fontawesome.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
@@ -64,19 +64,22 @@
     
     <!-- Header -->
     {% block header %}
-    <header class="header">
-        <div class="container">
-            <h1 class="title">TK-Brown Coffee🍵</h1>
-            <p class="subtitle">Scan • Browse • Order</p>
-            <div id="manager-badge"></div>
-        </div>
-    </header>
+        <header class="header">
+            <div class="container">
+                <h1 class="title">TK-Brown Coffee🍵</h1>
+                <p class="subtitle">Scan • Browse • Order</p>
+                <div id="manager-badge"></div>
+            </div>
+        </header>
     {% endblock %}
 
     {% block content %}{% endblock %}
+
     {% comment %} <div id="error-message" style="display: none; color: red; font-weight: bold;"></div> {% endcomment %}
     <div id="toast-container"></div>
-    <!-- Custom Confirmation Modal -->
+
+    <!-- Modals -->
+    <!-- Confirmation Modal -->
     <div id="confirmation-modal" class="modal hidden">
         <div class="modal-content">
             <p id="confirmation-message"></p>
@@ -86,7 +89,6 @@
             </div>
         </div>
     </div>
-    <!-- Modals -->
     <!-- Item Details Modal -->
     <div id="item-modal" class="modal hidden">
         <div class="item-modal-content">
@@ -102,7 +104,7 @@
                     <p id="item-modal-description"></p>
                     <div class="item-modal-footer">
                         <span id="item-modal-price" class="item-modal-price"></span>
-                        <button id="item-modal-add-btn" class="btn btn-primary">Add to Cart</button>
+                        <button id="item-modal-add-btn" class="btn btn-primary">Add to Table</button>
                     </div>
                 </div>
             </div>
@@ -130,7 +132,7 @@
     </div>
 
     {% block js %}
-    <script src="{% static 'js/script.js' %}"></script>
+        <script src="{% static 'js/script.js' %}"></script>
     {% endblock %}
 </body>
 </html>
