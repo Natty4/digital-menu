@@ -10,6 +10,7 @@ class ManagerDashboard {
         this.editingItemId = null;
         this.editingCategoryId = null;
         this.activeRequests = 0;
+        this.isSaving = false;
         
         this.init();
     }
@@ -235,22 +236,26 @@ class ManagerDashboard {
         
         const defaultOptions = {
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Token ${this.authToken}`
             }
         };
+
+        // Only set Content-Type for non-FormData requests
+        if (!(options.body instanceof FormData)) {
+            defaultOptions.headers['Content-Type'] = 'application/json';
+        }
         
         const finalOptions = { ...defaultOptions, ...options };
         
         try {
             const response = await fetch(`${window.location.origin}/api${endpoint}`, finalOptions);
-            
+
             if (response.status === 401) {
-                // Token expired or invalid
                 localStorage.removeItem('managerToken');
                 this.authToken = null;
                 this.isAuthenticated = false;
                 this.showLoginModal();
+                this.showToast('Session expired. Please log in again.');
                 return null;
             }
             
@@ -267,10 +272,12 @@ class ManagerDashboard {
             return await response.json();
         } catch (error) {
             console.error('API call failed:', error);
-            this.showToast('Operation failed. Please try again.');
-            return null;
+            throw error;
         } finally {
-            this.hideLoading();
+            this.activeRequests--;
+            if (this.activeRequests === 0) {
+                this.hideLoading();
+            }
         }
     }
 
@@ -290,11 +297,16 @@ class ManagerDashboard {
   }
 
   async fetchMenuItems() {
-    const data = await this.apiCall('/menu_items/')
-    if (data) {
-      this.menuItems = data.results || data
-      this.renderMenuTable()
-    }
+      try {
+          const data = await this.apiCall('/menu_items/');
+          if (data) {
+              this.menuItems = data.results || data;
+              this.renderMenuTable();
+          }
+      } catch (error) {
+          console.error('Failed to fetch menu items:', error);
+          this.showToast('Failed to refresh menu. Please try again.');
+      }
   }
 
   async fetchCategories() {
@@ -315,25 +327,43 @@ class ManagerDashboard {
   }
 
   async saveMenuItem(itemData) {
-    const formData = new FormData();
+    if (this.isSaving) {
+        console.log('Save in progress, ignoring request');
+        return;
+    }
+    this.isSaving = true;
 
-    // Append all fields to form data
+    // Validate itemData
+    const requiredFields = ['name', 'price', 'category', 'description', 'is_available'];
+    for (const field of requiredFields) {
+        if (itemData[field] === undefined || itemData[field] === null) {
+            const errorMsg = `Missing required field: ${field}`;
+            console.error(errorMsg);
+            this.showToast(errorMsg);
+            this.isSaving = false;
+            return;
+        }
+    }
+
+    // Ensure category is a valid ID
+    if (typeof itemData.category === 'object' && itemData.category?.id) {
+        itemData.category = itemData.category.id;
+    }
+
+    const formData = new FormData();
     Object.keys(itemData).forEach(key => {
         if (key === 'image' && itemData[key] instanceof File) {
             formData.append('image', itemData[key]);
-        } else if (key === 'category') {
-            // Ensure category is sent as ID
-            formData.append('category', itemData[key]);
-        } else if (key !== 'image') { // Skip image field if it's not a File
+        } else if (key !== 'image') {
             formData.append(key, itemData[key]);
         }
     });
 
-    let endpoint = '/api/menu_items/';
+    let endpoint = '/menu_items/';
     let method = 'POST';
 
     if (this.editingItemId) {
-        endpoint = `/api/menu_items/${this.editingItemId}/`;
+        endpoint = `/menu_items/${this.editingItemId}/`;
         method = 'PUT';
     }
 
@@ -341,35 +371,38 @@ class ManagerDashboard {
         method: method,
         headers: {
             'Authorization': `Token ${this.authToken}`,
-            // Note: Don't set Content-Type for FormData, let browser set it with boundary
         },
         body: formData
     };
 
-    // Remove Content-Type header for FormData (browser will set it with boundary)
-    delete options.headers['Content-Type'];
-
     try {
-        this.showLoading();
-        const response = await fetch(endpoint, options);
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || errorData.message || 'Failed to save menu item');
+        const data = await this.apiCall(endpoint, options);
+        if (!data) {
+            // apiCall already showed a toast for errors (e.g., 401)
+            return;
         }
-        
-        const data = await response.json();
-        await this.fetchMenuItems(); // Refresh the list
-        this.clearMenuItemModal();
-        document.getElementById("menu-item-modal").classList.add("hidden");
+
+        // Item saved successfully
         this.showToast('Menu item saved successfully.', 'success');
+
+        // Perform post-save actions in a separate try-catch
+        try {
+            await this.fetchMenuItems();
+            this.clearMenuItemModal();
+            const modal = document.getElementById("menu-item-modal");
+            if (modal) {
+                modal.classList.add("hidden");
+            } else {
+                console.warn('Menu item modal not found');
+            }
+        } catch (postSaveError) {
+            console.error('Post-save error:', postSaveError);
+            this.showToast('Item saved, but failed to refresh or close modal. Please refresh the page.');
+        }
+
         return data;
-    } catch (error) {
-        console.error('Error saving menu item:', error);
-        this.showToast(error.message || 'There was an error saving the menu item. Please try again.');
-        throw error;
     } finally {
-        this.hideLoading();
+        this.isSaving = false;
     }
   }
 
@@ -377,13 +410,16 @@ class ManagerDashboard {
 
   clearMenuItemModal() {
     // Clear all fields in the modal
-    document.getElementById('item-name-input').value = '';
-    document.getElementById('item-price-input').value = '';
-    document.getElementById('item-description-input').value = '';
-    document.getElementById('item-category-input').value = '';
-    document.getElementById('item-image-input').value = ''; // Optional: Reset image input
-    document.getElementById('item-image-preview').classList.add('hidden'); // Hide image preview
-    document.getElementById('item-available-input').checked = true; // Reset "available" checkbox if needed
+    const modal = document.getElementById('menu-item-modal');
+    if (modal) {
+      document.getElementById('item-name-input').value = '';
+      document.getElementById('item-price-input').value = '';
+      document.getElementById('item-description-input').value = '';
+      document.getElementById('item-category-input').value = '';
+      document.getElementById('item-image-input').value = ''; // Optional: Reset image input
+      document.getElementById('item-image-preview').classList.add('hidden'); // Hide image preview
+      document.getElementById('item-available-input').checked = true; // Reset "available" checkbox if needed
+    }
   }
 
 

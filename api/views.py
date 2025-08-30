@@ -40,41 +40,43 @@ class MenuItemViewSet(viewsets.ModelViewSet):
         context['request'] = self.request
         return context
 
-    def create(self, request, *args, **kwargs):
-        print("CREATE REQUEST DATA:", request.data)  # Debug print
-        print("CREATE REQUEST FILES:", request.FILES)  # Debug print
-        
+    def create(self, request, *args, **kwargs):   
+           
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            return Response({
+                'data': serializer.data,
+                'message': 'Menu item created successfully'
+            }, status=status.HTTP_201_CREATED, headers=headers)
         except Exception as e:
-            print("CREATE VIEW ERROR:", str(e))
-            return Response(
-                {'error': str(e), 'details': serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            print("CREATE VIEW ERROR:", str(e), serializer.errors)
+            return Response({
+                'error': str(e),
+                'details': serializer.errors or 'Invalid data provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
-        print("UPDATE REQUEST DATA:", request.data)  # Debug print
-        print("UPDATE REQUEST FILES:", request.FILES)  # Debug print
         
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', True)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         
         try:
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
-            return Response(serializer.data)
+            return Response({
+                'data': serializer.data,
+                'message': 'Menu item updated successfully'
+            })
         except Exception as e:
-            print("UPDATE VIEW ERROR:", str(e))
-            return Response(
-                {'error': str(e), 'details': serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            print("UPDATE VIEW ERROR:", str(e), serializer.errors)
+            return Response({
+                'error': str(e),
+                'details': serializer.errors or 'Invalid data provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
