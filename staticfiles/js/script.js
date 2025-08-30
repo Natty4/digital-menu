@@ -311,11 +311,13 @@ async function apiCall(url, options = {}) {
   }
 
   function renderCart() {
-    if (cart.length === 0) {
+    if (cart.length === 0 || cart.length < 0) {
       cartButton.classList.add("hidden")
+      cartOverlay.classList.add("hidden")
       return
     }
-
+    
+    cartOverlay.classList.remove("hidden")
     cartButton.classList.remove("hidden")
     cartBadge.textContent = getTotalItems()
 

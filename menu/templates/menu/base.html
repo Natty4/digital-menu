@@ -78,7 +78,6 @@
     {% comment %} <div id="error-message" style="display: none; color: red; font-weight: bold;"></div> {% endcomment %}
     <div id="toast-container"></div>
 
-    <!-- Modals -->
     <!-- Confirmation Modal -->
     <div id="confirmation-modal" class="modal hidden">
         <div class="modal-content">
@@ -86,47 +85,6 @@
             <div class="modal-actions">
                 <button id="confirm-btn" class="btn btn-sm btn-outline danger">Yes</button>
                 <button id="cancel-btn" class="btn btn-sm btn-outline">No</button>
-            </div>
-        </div>
-    </div>
-    <!-- Item Details Modal -->
-    <div id="item-modal" class="modal hidden">
-        <div class="item-modal-content">
-            <div class="item-modal-header">
-                <button id="item-modal-close" class="close-btn">✕</button>
-            </div>
-            <div class="item-modal-body">
-                <div class="item-modal-image">
-                    <img id="item-modal-img" src="https://plakarestaurant.ca/wp-content/themes/twentytwentythree-child/img/food-placeholder.png" alt="Coffee or Food Item at TK-Brown Coffee" />
-                </div>
-                <div class="item-modal-info">
-                    <h2 id="item-modal-name"></h2>
-                    <p id="item-modal-description"></p>
-                    <div class="item-modal-footer">
-                        <span id="item-modal-price" class="item-modal-price"></span>
-                        <button id="item-modal-add-btn" class="btn btn-primary">Add to Table</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cart Overlay -->
-    <div id="cart-overlay" class="cart-overlay hidden">
-        <div class="cart-content">
-            <div class="cart-header">
-                <h2>Your Order</h2>
-                <button id="cart-close-btn" class="close-btn">✕</button>
-            </div>
-            <div id="cart-items" class="cart-items">
-                <!-- Cart items will be populated by JavaScript -->
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Total</span>
-                    <span id="cart-total-price">ETB0</span>
-                </div>
-                <button id="place-order-btn" class="btn btn-primary btn-full">Place Order</button>
             </div>
         </div>
     </div>
