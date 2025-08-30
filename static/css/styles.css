@@ -709,6 +709,9 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .menu-table-container {
+      overflow: auto !important;
+    }
   .stats-grid {
     grid-template-columns: 1fr;
   }
@@ -971,6 +974,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  overflow-x: auto !important;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
 }
@@ -1161,6 +1165,18 @@ body {
 .form-group #qr-color {
   cursor: pointer;
 }
+
+.error-message {
+    color: #e53573;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.error-message.hidden {
+    display: none;
+}
+
+
 .logo-preview {
   margin-top: 1rem;
   padding: 1rem;
@@ -1439,7 +1455,7 @@ select {
   animation: fadeInOut 3s forwards;
   transition: opacity 0.3s ease;
   pointer-events: all;
-  max-width: 300px;
+  max-width: 400px;
   min-width: 200px;
 }
 
@@ -1525,4 +1541,47 @@ select {
     padding: 1rem;
     font-weight: bold;
     grid-column: span 2; 
+}
+
+/* Loading Indicator Styles */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+.loading-spinner {
+    text-align: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #8B4513;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+    color: #5D4037;
+    font-weight: 500;
+    margin: 0;
 }

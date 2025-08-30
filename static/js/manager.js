@@ -1,39 +1,181 @@
-// Manager Dashboard JavaScript
-
 class ManagerDashboard {
-  constructor() {
-    this.toastContainer = document.getElementById('toast-container');
-    this.currentSection = "menu"
-    this.menuItems = []
-    this.categories = []
-    this.orders = []
-    this.logoSrc = null
-    this.editingItemId = null
-    this.editingCategoryId = null
-    this.authToken = localStorage.getItem('managerToken')
-    
-    
-    if (!this.authToken) {
-      window.location.href = '/'
-      return
+    constructor() {
+        this.authToken = localStorage.getItem('managerToken');
+        this.isAuthenticated = false;
+        this.currentSection = "menu";
+        this.menuItems = [];
+        this.categories = [];
+        this.orders = [];
+        this.logoSrc = null;
+        this.editingItemId = null;
+        this.editingCategoryId = null;
+        this.activeRequests = 0;
+        
+        this.init();
     }
-    this.init()
-  }
 
-  init() {
-    this.setupNavigation()
-    this.setupMenuManagement()
-    this.setupCategoryManagement()
-    this.setupQRGenerator()
-    this.setupOrderManagement()
-    this.fetchMenuItems()
-    this.fetchCategories()
-    this.fetchOrders()
-    this.updateStats()
-    this.fetchQRCodeList()
-  }
+    init() {
+        this.setupLoginModal();
+        
+        // Check if we have a token and verify it
+        if (this.authToken) {
+            this.verifyToken();
+        } else {
+            this.showLoginModal();
+        }
+    }
+
+    setupLoginModal() {
+        // Login button event
+        document.getElementById('manager-login-btn').addEventListener('click', () => {
+            this.handleLogin();
+        });
+
+        // Cancel button event - redirect to home page
+        document.getElementById('manager-cancel-btn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        // Allow login on Enter key
+        const passwordInput = document.getElementById('manager-password');
+        if (passwordInput) {
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleLogin();
+                }
+            });
+        }
+    }
+
+    async verifyToken() {
+        try {
+            this.showLoading();
+            const response = await fetch('/api/menu_items/', {
+                headers: {
+                    'Authorization': `Token ${this.authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                this.isAuthenticated = true;
+                this.hideLoginModal();
+                this.showManagerContent();
+                this.initializeDashboard();
+            } else {
+                // Token is invalid
+                localStorage.removeItem('managerToken');
+                this.authToken = null;
+                this.showLoginModal();
+            }
+        } catch (error) {
+            console.error('Token verification failed:', error);
+            localStorage.removeItem('managerToken');
+            this.authToken = null;
+            this.showLoginModal();
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async handleLogin() {
+        const username = document.getElementById('manager-username').value;
+        const password = document.getElementById('manager-password').value;
+        const errorElement = document.getElementById('login-error');
+        
+        // Clear previous errors
+        if (errorElement) {
+            errorElement.classList.add('hidden');
+        }
+        
+        if (!username || !password) {
+            this.showError('Please enter both username and password');
+            return;
+        }
+        
+        try {
+            this.showLoading();
+            const response = await fetch('/api/manager/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.authToken = data.token;
+                localStorage.setItem('managerToken', this.authToken);
+                this.isAuthenticated = true;
+                
+                this.hideLoginModal();
+                this.showManagerContent();
+                this.initializeDashboard();
+                
+            } else {
+                const errorData = await response.json();
+                const errorMessage = errorData.non_field_errors ? 
+                    errorData.non_field_errors[0] : 
+                    'Login failed. Please check your credentials.';
+                
+                this.showError(errorMessage);
+            }
+        } catch (error) {
+            this.showError('Network error. Please try again.');
+            console.error('Login error:', error);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    showError(message) {
+        const errorElement = document.getElementById('login-error');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+    }
+
+    showLoginModal() {
+        const loginModal = document.getElementById('manager-login-modal');
+        const managerContent = document.getElementById('manager-content');
+        
+        if (loginModal) loginModal.classList.remove('hidden');
+        if (managerContent) managerContent.classList.add('hidden');
+        
+        // Focus on password field
+        const passwordInput = document.getElementById('manager-password');
+        if (passwordInput) passwordInput.focus();
+    }
+
+    hideLoginModal() {
+        const loginModal = document.getElementById('manager-login-modal');
+        if (loginModal) loginModal.classList.add('hidden');
+    }
+
+    showManagerContent() {
+        const managerContent = document.getElementById('manager-content');
+        if (managerContent) managerContent.classList.remove('hidden');
+    }
+
+    initializeDashboard() {
+        // Only initialize the dashboard if authenticated
+        if (!this.isAuthenticated) return;
+        
+        this.setupNavigation();
+        this.setupMenuManagement();
+        this.setupCategoryManagement();
+        this.setupQRGenerator();
+        this.setupOrderManagement();
+        this.fetchMenuItems();
+        this.fetchCategories();
+        this.fetchOrders();
+        this.updateStats();
+        this.fetchQRCodeList();
+    }
 
 
+  
    // Function to show toaster messages
   showToast(message, type = 'error') {
       const toastContainer = document.getElementById('toast-container');
@@ -60,42 +202,79 @@ class ManagerDashboard {
   }
 
 
+  // Show loading indicator
+  showLoading() {
+      this.activeRequests++;
+      if (this.activeRequests === 1) {
+          document.getElementById('loading-overlay').classList.remove('hidden');
+      }
+  }
+
+  // Hide loading indicator
+  hideLoading() {
+      this.activeRequests = Math.max(0, this.activeRequests - 1);
+      if (this.activeRequests === 0) {
+          document.getElementById('loading-overlay').classList.add('hidden');
+      }
+  }
+  
   // API Functions
   async apiCall(endpoint, options = {}) {
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${this.authToken}`
-      }
-    }
-    
-    const finalOptions = { ...defaultOptions, ...options }
-    
-    try {
-      const response = await fetch(`${window.location.origin}/api${endpoint}`, finalOptions)
-      
-      if (response.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('managerToken')
-        window.location.href = '/'
-        return null
-      }
-      
-      if (response.status === 204) {
-            return { status: 204 };  // Returning an object with status for easy checking
+        this.showLoading();
+        
+        const defaultOptions = {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Token ${this.authToken}`
+            }
+        };
+        
+        const finalOptions = { ...defaultOptions, ...options };
+        
+        try {
+            const response = await fetch(`${window.location.origin}/api${endpoint}`, finalOptions);
+            
+            if (response.status === 401) {
+                // Token expired or invalid
+                localStorage.removeItem('managerToken');
+                this.authToken = null;
+                this.isAuthenticated = false;
+                this.showLoginModal();
+                return null;
+            }
+            
+            if (response.status === 204) {
+                return { status: 204 };
+            }
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                this.showToast(errorData?.detail || `API error: ${response.status}`);
+                throw new Error(errorData?.detail || `API error: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('API call failed:', error);
+            this.showToast('Operation failed. Please try again.');
+            return null;
+        } finally {
+            this.hideLoading();
         }
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        this.showToast(errorData?.detail || `API error: ${response.status}`);
-        throw new Error(errorData?.detail || `API error: ${response.status}`);
-      }
-      
-      return await response.json()
+    }
+
+   async logout() {
+    try {
+        // Try to call the logout endpoint to invalidate the token server-side
+        await this.apiCall('/manager/logout/', {
+            method: 'POST'
+        });
     } catch (error) {
-      console.error('API call failed:', error);
-      this.showToast('Operation failed. Please try again.');
-      return null;
+        console.error('Logout API call failed, but proceeding with client-side logout:', error);
+        // Continue with client-side logout even if API call fails
+    } finally {
+        localStorage.removeItem('managerToken');
+        window.location.href = '/manager_login.html';
     }
   }
 
@@ -383,81 +562,104 @@ class ManagerDashboard {
       }
   }
 
-// Function to display the list of QR codes
-displayQRCodeList(qrCodes) {
-    const qrCodesList = document.getElementById('qr-codes-list');
-    qrCodesList.innerHTML = '';  // Clear previous list
+  // Function to display the list of QR codes
+  displayQRCodeList(qrCodes) {
+      const qrCodesList = document.getElementById('qr-codes-list');
+      qrCodesList.innerHTML = '';  // Clear previous list
 
-    qrCodes.forEach(qr => {
-        const qrDiv = document.createElement('div');
-        qrDiv.classList.add('qr-item');
-        qrDiv.innerHTML = `
-            <div class="qr-item-content">
-                <h4>${qr.table_number}</h4>
-                <img src="${qr.qr_code_url}" alt="QR Code for Table ${qr.table_number}" class="qr-image" />
-                <button class="btn-download">Download <i class="fas fa-download"></i></button>
-                <button class="btn-print">Print <i class="fas fa-print"></i></button>
-            </div>
-        `;
-        
-        // Add the buttons and set up the event listeners
-        const downloadButton = qrDiv.querySelector('.btn-download');
-        const printButton = qrDiv.querySelector('.btn-print');
-        
-        // Attach the event listeners
-        downloadButton.addEventListener('click', () => this.downloadQRCode(qr.qr_code_url));
-        printButton.addEventListener('click', () => this.printQRCode(qr.qr_code_url));
-        
-        qrCodesList.appendChild(qrDiv);
-    });
-}
+      qrCodes.forEach(qr => {
+          const qrDiv = document.createElement('div');
+          qrDiv.classList.add('qr-item');
+          qrDiv.innerHTML = `
+              <div class="qr-item-content">
+                  <h4>${qr.table_number}</h4>
+                  <img src="${qr.qr_code_url}" alt="QR Code for Table ${qr.table_number}" class="qr-image" />
+                  <button class="btn-download">Download <i class="fas fa-download"></i></button>
+                  <button class="btn-print">Print <i class="fas fa-print"></i></button>
+              </div>
+          `;
+          
+          // Add the buttons and set up the event listeners
+          const downloadButton = qrDiv.querySelector('.btn-download');
+          const printButton = qrDiv.querySelector('.btn-print');
+          
+          // Attach the event listeners
+          downloadButton.addEventListener('click', () => this.downloadQRCode(qr.qr_code_url));
+          printButton.addEventListener('click', () => this.printQRCode(qr.qr_code_url));
+          
+          qrCodesList.appendChild(qrDiv);
+      });
+  }
 
-// Function to download a QR code
-downloadQRCode(url) {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'qr_code.png';  // Set the download file name
-    link.click();
-}
+  // Function to download a QR code
+  downloadQRCode(url) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'qr_code.png';  // Set the download file name
+      link.click();
+  }
 
-// Function to print a QR code
-printQRCode(url) {
-    const imgWindow = window.open(url, '_blank');
-    imgWindow.print();
-}
+  // Function to print a QR code
+  printQRCode(url) {
+      const imgWindow = window.open(url, '_blank');
+      imgWindow.print();
+  }
 
 
-  // The rest of the class remains largely the same, but uses the API methods above
-  // instead of localStorage. I'll include the key methods that need to change:
+  logout() {
+        localStorage.removeItem('managerToken');
+        this.authToken = null;
+        this.isAuthenticated = false;
+        this.showLoginModal();
+        this.hideManagerContent();
+    }
 
+  hideManagerContent() {
+      const managerContent = document.getElementById('manager-content');
+      if (managerContent) managerContent.classList.add('hidden');
+  }
+
+  // Update setupNavigation to include logout
   setupNavigation() {
-    const navItems = document.querySelectorAll(".nav-item")
-    const sections = document.querySelectorAll(".manager-section")
+      const navItems = document.querySelectorAll(".nav-item");
+      const sections = document.querySelectorAll(".manager-section");
 
-    navItems.forEach((item) => {
-      item.addEventListener("click", () => {
-        const sectionName = item.dataset.section
+      navItems.forEach((item) => {
+          item.addEventListener("click", () => {
+              const sectionName = item.dataset.section;
 
-        // Update active nav item
-        navItems.forEach((nav) => nav.classList.remove("active"))
-        item.classList.add("active")
+              // Update active nav item
+              navItems.forEach((nav) => nav.classList.remove("active"));
+              item.classList.add("active");
 
-        // Update active section
-        sections.forEach((section) => section.classList.remove("active"))
-        document.getElementById(`${sectionName}-section`).classList.add("active")
+              // Update active section
+              sections.forEach((section) => section.classList.remove("active"));
+              document.getElementById(`${sectionName}-section`).classList.add("active");
 
-        this.currentSection = sectionName
-        // Refresh data when switching to orders section
-        if (sectionName === 'orders') {
-          this.fetchOrders()
-        }
-      })
-    })
+              this.currentSection = sectionName;
+              
+              // Refresh data when switching to orders section
+              if (sectionName === 'orders') {
+                  this.fetchOrders();
+              }
+          });
+      });
 
-    // Back to menu button
-    document.getElementById("back-to-menu").addEventListener("click", () => {
-      window.location.href = "/"
-    })
+      // Back to menu button
+      const backButton = document.getElementById("back-to-menu");
+      if (backButton) {
+          backButton.addEventListener("click", () => {
+              window.location.href = "/";
+          });
+      }
+
+      // Logout button
+      const logoutBtn = document.getElementById("logout-btn");
+      if (logoutBtn) {
+          logoutBtn.addEventListener("click", () => {
+              this.logout();
+          });
+      }
   }
 
   renderMenuTable() {
@@ -866,3 +1068,7 @@ printQRCode(url) {
 
 // Initialize manager dashboard
 const manager = new ManagerDashboard()
+
+// document.addEventListener('DOMContentLoaded', function() {
+//     window.manager = new ManagerDashboard();
+// });

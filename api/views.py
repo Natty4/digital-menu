@@ -6,11 +6,9 @@ import cloudinary.uploader
 from io import BytesIO
 from PIL import Image
 from django.conf import settings
-from django.http import JsonResponse
 from django.shortcuts import render
 from django.db.models import Case, When, IntegerField
-from django.core.files.base import ContentFile
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -265,3 +263,11 @@ class CustomAuthToken(ObtainAuthToken):
             'user_id': user.pk,
             'username': user.username
         })
+        
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def manager_logout(request):
+    # Delete the token from the database
+    request.auth.delete()
+    return Response({'detail': 'Successfully logged out.'})

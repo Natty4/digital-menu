@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from api.views import (
     CategoryViewSet, MenuItemViewSet, OrderViewSet, 
     QRCodeViewSet, menu_list, menu_by_uuid, CustomAuthToken,
+    manager_logout,
 
 )
 
@@ -17,5 +18,6 @@ urlpatterns = [
     path('menu/', menu_list, name='menu-list'),
     path('menu/<uuid:uuid>/', menu_by_uuid, name='menu-by-uuid'),
     path('manager/login/', CustomAuthToken.as_view(), name='manager-login'),
+    path('manager/logout/', manager_logout, name='manager-logout'),
     
 ]
