@@ -52,7 +52,8 @@ class ManagerDashboard {
             this.showLoading();
             const response = await fetch('/api/menu_items/', {
                 headers: {
-                    'Authorization': `Token ${this.authToken}`
+                    'Authorization': `Token ${this.authToken}`,
+                    'X-CSRFToken': getCSRFToken()
                 }
             });
             
