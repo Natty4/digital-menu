@@ -4,6 +4,9 @@ import cloudinary.uploader
 from django.db import models
 from django.conf import settings
 from cloudinary.models import CloudinaryField
+from django.utils import timezone
+from user_agents import parse
+from django.contrib.auth.models import User
 
 
 class Category(models.Model):
@@ -11,7 +14,6 @@ class Category(models.Model):
     
     def __str__(self):
         return self.name
-
 
 class MenuItem(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -73,7 +75,6 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity}x {self.menu_item.name} for Order #{self.order.id}"
 
-
 class QRCode(models.Model):
     uuid = models.UUIDField(unique=True, default=uuid.uuid4)
     table_number = models.CharField(max_length=50, unique=True)
@@ -91,3 +92,80 @@ class QRCode(models.Model):
 
     def __str__(self):
         return f"QR Code for Table {self.table_number}"
+
+
+
+class VisitorLog(models.Model):
+    VISITOR_TYPES = [
+        ('customer', 'Customer'),
+        ('manager', 'Manager'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    visitor_type = models.CharField(max_length=10, choices=VISITOR_TYPES)
+    session_id = models.CharField(max_length=100, blank=True, null=True)  # Allow null and blank
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    browser = models.CharField(max_length=100, blank=True)
+    os = models.CharField(max_length=100, blank=True)
+    device = models.CharField(max_length=100, blank=True)
+    referrer = models.URLField(blank=True)
+    page_visited = models.CharField(max_length=200)
+    table_number = models.CharField(max_length=50, blank=True, null=True)
+    qr_code = models.ForeignKey('QRCode', on_delete=models.SET_NULL, null=True, blank=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    duration = models.IntegerField(default=0)  # in seconds
+    
+    class Meta:
+        ordering = ['-timestamp']
+    
+    def save(self, *args, **kwargs):
+        # Parse user agent string
+        if self.user_agent:
+            ua = parse(self.user_agent)
+            self.browser = f"{ua.browser.family} {ua.browser.version_string}"
+            self.os = f"{ua.os.family} {ua.os.version_string}"
+            self.device = ua.device.family
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.visitor_type} - {self.page_visited} - {self.timestamp}"
+    
+class ActivityLog(models.Model):
+    ACTIVITY_TYPES = [
+        ('menu_view', 'Menu View'),
+        ('category_view', 'Category View'),
+        ('item_view', 'Item View'),
+        ('order_placed', 'Order Placed'),
+        ('qr_generated', 'QR Code Generated'),
+        ('item_created', 'Menu Item Created'),
+        ('item_updated', 'Menu Item Updated'),
+        ('item_deleted', 'Menu Item Deleted'),
+        ('login', 'Manager Login'),
+        ('logout', 'Manager Logout'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+    details = models.JSONField(default=dict)  # Store additional data
+    timestamp = models.DateTimeField(default=timezone.now)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+    
+    def __str__(self):
+        return f"{self.activity_type} - {self.timestamp}"
+
+class DailyRevenue(models.Model):
+    date = models.DateField(unique=True)
+    total_revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_orders = models.IntegerField(default=0)
+    average_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    class Meta:
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"{self.date} - ETB{self.total_revenue}"

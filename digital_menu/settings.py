@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework.authtoken',
+    'django_user_agents',
+    'django_jsonfield_backport',
     
     # Local apps
     'menu',
@@ -43,6 +45,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = "digital_menu.urls"
@@ -147,3 +150,9 @@ cloudinary_config = {
 config(**cloudinary_config)
 
 SUPERUSER_PASSWORD = os.getenv('SUPERUSER_PASSWORD', 'admin')
+
+# User agents cache
+USER_AGENTS_CACHE = 'default'
+MIDDLEWARE.insert(-1, 'django_user_agents.middleware.UserAgentMiddleware')
+MIDDLEWARE.insert(-1, 'menu.middleware.VisitorTrackingMiddleware')
+

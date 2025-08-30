@@ -58,6 +58,10 @@
                         <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
                         <span class="nav-label">Orders</span>
                     </button>
+                    <button class="nav-item" data-section="analytics">
+                        <span class="nav-icon"><i class="fa fa-pie-chart"></i></span>
+                        <span class="nav-label">Analytics</span>
+                    </button>
                 </div>
                 <div class="sidebar-footer">
                     <button id="logout-btn" class="btn btn-outline btn-sm">Logout</button>
@@ -171,6 +175,173 @@
                         <!-- Order cards will be populated by JavaScript -->
                     </div>
                 </div>
+
+                <div id="analytics-section" class="manager-section">
+                    <div class="section-header">
+                        <h1>Analytics Dashboard</h1>
+                        <div class="date-filter">
+                            <select id="analytics-timeframe">
+                                <option value="7">7 days</option>
+                                <option value="30" selected>30 days</option>
+                                <option value="90">90 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="analytics-summary-cards">
+                        <div class="summary-card">
+                            <div class="card-icon">👥</div>
+                            <div class="card-content">
+                                <h3 id="total-visitors">0</h3>
+                                <p>Total Visitors</p>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="card-icon">👤</div>
+                            <div class="card-content">
+                                <h3 id="total-customers">0</h3>
+                                <p>Customers</p>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="card-icon">🛎️</div>
+                            <div class="card-content">
+                                <h3 id="total-orders">0</h3>
+                                <p>Orders</p>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="card-icon">💰</div>
+                            <div class="card-content">
+                                <h3 id="total-revenue">ETB0</h3>
+                                <p>Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="charts-row">
+                        <div class="chart-container">
+                            <h3>Revenue Trend</h3>
+                            <canvas id="revenue-chart" height="250"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Visitor Trend</h3>
+                            <canvas id="visitor-chart" height="250"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Second Charts Row -->
+                    <div class="charts-row">
+                        <div class="chart-container">
+                            <h3>Most Ordered Items</h3>
+                            <canvas id="items-chart" height="250"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Revenue by Category</h3>
+                            <canvas id="categories-chart" height="250"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Third Charts Row -->
+                    <div class="charts-row">
+                        <div class="chart-container">
+                            <h3>Orders by Hour of Day</h3>
+                            <canvas id="hourly-orders-chart" height="250"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Popular Items -->
+                    <div class="popular-items">
+                        <h3>Top Performing Menu Items</h3>
+                        <div id="popular-items-list" class="popular-items-list">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Log Tabs -->
+                    <div class="log-tabs">
+                        <button class="tab-btn active" data-tab="visitor-log">Visitor Log</button>
+                        <button class="tab-btn" data-tab="activity-log">Activity Log</button>
+                    </div>
+                    
+                    <!-- Log Containers -->
+                    <div class="log-container">
+                        <div id="visitor-log" class="log-content active">
+                            <div class="log-header">
+                                <h3>Visitor Logs</h3>
+                                <div class="log-controls">
+                                    <input type="text" id="visitor-search" placeholder="Search visitors...">
+                                    <select id="visitor-type-filter">
+                                        <option value="">All Types</option>
+                                        <option value="customer">Customers</option>
+                                        <option value="manager">Managers</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="log-table-container">
+                                <table class="log-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Page</th>
+                                            <th>OS</th>
+                                            <th>Device</th>
+                                            <th>Timestamp</th>
+                                            <th>Duration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="visitor-log-body">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="log-pagination">
+                                <button id="visitor-prev" class="pagination-btn">Previous</button>
+                                <span id="visitor-page-info">Page 1 of 1</span>
+                                <button id="visitor-next" class="pagination-btn">Next</button>
+                            </div>
+                        </div>
+                        
+                        <div id="activity-log" class="log-content">
+                            <div class="log-header">
+                                <h3>Activity Logs</h3>
+                                <div class="log-controls">
+                                    <input type="text" id="activity-search" placeholder="Search activities...">
+                                    <select id="activity-type-filter">
+                                        <option value="">All Types</option>
+                                        <option value="menu_view">Menu Views</option>
+                                        <option value="order_placed">Orders</option>
+                                        <option value="item_created">Item Created</option>
+                                        <option value="item_updated">Item Updated</option>
+                                        <option value="login">Logins</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="log-table-container">
+                                <table class="log-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Activity</th>
+                                            <th>User</th>
+                                            <th>Details</th>
+                                            <th>Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="activity-log-body">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="log-pagination">
+                                <button id="activity-prev" class="pagination-btn">Previous</button>
+                                <span id="activity-page-info">Page 1 of 1</span>
+                                <button id="activity-next" class="pagination-btn">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
         <!-- Add/Edit Menu Item Modal -->
@@ -246,5 +417,7 @@
 
 {% block js %}
     <script src="{% static 'js/qrcode.min.js' %}"></script>
+    <script src="{% static 'js/chart.umd.min.js' %}"></script>
     <script src="{% static 'js/manager.js' %}"></script>
+
 {% endblock %}

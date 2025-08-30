@@ -1,6 +1,7 @@
 import cloudinary.uploader
 from rest_framework import serializers
 from menu.models import Category, MenuItem, Order, OrderItem, QRCode
+from menu.models import VisitorLog, ActivityLog, DailyRevenue
 
 
 
@@ -153,3 +154,34 @@ class QRCodeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = QRCode
         fields = ['table_number', 'qr_color', 'logo']
+        
+
+class VisitorLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisitorLog
+        fields = '__all__'
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = ActivityLog
+        fields = '__all__'
+
+class DailyRevenueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyRevenue
+        fields = '__all__'
+
+class AnalyticsSummarySerializer(serializers.Serializer):
+    total_visitors = serializers.IntegerField()
+    total_customers = serializers.IntegerField()
+    total_managers = serializers.IntegerField()
+    total_orders = serializers.IntegerField()
+    total_revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
+    popular_items = serializers.ListField()
+    popular_categories = serializers.ListField()
+    hourly_orders = serializers.ListField()
+    category_revenue = serializers.ListField()
+    revenue_data = serializers.ListField()
+    visitor_data = serializers.ListField()

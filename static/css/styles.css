@@ -1634,3 +1634,456 @@ select {
 }
 
 
+/* Analytics Styles */
+.analytics-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 80px;
+}
+
+.summary-card .card-icon {
+    font-size: 1.5rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f5f0;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.summary-card .card-content h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #5D4037;
+    line-height: 1.2;
+}
+
+.summary-card .card-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+/* Charts Responsive Layout */
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .charts-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .charts-row.full-width {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chart-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.chart-container h3 {
+    margin: 0 0 1rem 0;
+    color: #5D4037;
+    font-size: 1.1rem;
+}
+
+/* Popular Items Responsive */
+.popular-items {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.popular-items h3 {
+    margin: 0 0 1rem 0;
+    color: #5D4037;
+    font-size: 1.1rem;
+}
+
+.popular-items-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.popular-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+}
+
+.popular-item:last-child {
+    border-bottom: none;
+}
+
+.popular-item .item-info {
+    flex: 1;
+    min-width: 200px;
+    margin-right: 1rem;
+}
+
+.popular-item .item-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #5D4037;
+    font-size: 1rem;
+}
+
+.popular-item .item-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.popular-item .stat {
+    font-size: 0.8rem;
+    color: #666;
+    padding: 0.2rem 0.5rem;
+    background: #f0f0f0;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.popular-item .stat.revenue {
+    background: #e8f5e8;
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+.popular-item .item-percentage {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #8B4513;
+    flex-shrink: 0;
+}
+
+/* Log Tabs Responsive */
+.log-tabs {
+    display: flex;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.log-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-btn {
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tab-btn.active {
+    color: #8B4513;
+    border-bottom: 2px solid #8B4513;
+}
+
+/* Log Tables Responsive */
+.log-container {
+    overflow: hidden;
+}
+
+.log-content {
+    display: none;
+    overflow-x: auto;
+}
+
+.log-content.active {
+    display: block;
+}
+
+.log-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+    .log-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.log-header h3 {
+    margin: 0;
+    color: #5D4037;
+    font-size: 1.1rem;
+}
+
+.log-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.log-controls input,
+.log-controls select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    max-width: 120px;
+    margin-bottom: 0 !important;
+}
+
+.log-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.log-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.log-table th,
+.log-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+.log-table th {
+    background: #f8f5f0;
+    font-weight: 600;
+    color: #5D4037;
+    position: sticky;
+    top: 0;
+}
+
+/* Responsive table cells */
+@media (max-width: 768px) {
+    .log-table th,
+    .log-table td {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .log-table th:nth-child(3),
+    .log-table td:nth-child(3),
+    .log-table th:nth-child(4),
+    .log-table td:nth-child(4) {
+        display: none;
+    }
+    .popular-item .item-info h4 {
+      font-size: small;
+      white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .log-table th:nth-child(2),
+    .log-table td:nth-child(2) {
+        display: none;
+    }
+    .item-percentage {
+      display: none;
+    }
+    .popular-item .item-info h4 {
+      font-size: small;
+      white-space: nowrap;
+    }
+}
+
+/* Badge styles for visitor type */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.badge.customer {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.badge.manager {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+/* Pagination Responsive */
+.log-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.pagination-btn {
+    padding: 0.5rem 0.75rem;
+    background: #8B4513;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+.pagination-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Date Filter Responsive */
+.date-filter {
+    margin-left: auto;
+}
+
+.date-filter select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    font-size: 0.9rem;
+}
+
+/* Chart canvas responsive */
+.chart-container canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* Section header responsive */
+.section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .section-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.section-header h1 {
+    margin: 0;
+    color: #5D4037;
+    font-size: 1.5rem;
+}
+
+/* No data message */
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* Loading state for charts */
+.chart-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: #666;
+}
+
+/* Touch-friendly buttons */
+#logout-btn, #back-to-menu {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile-first table improvements */
+@media (max-width: 768px) {
+    .log-table {
+        font-size: 0.8rem;
+    }
+    
+    .log-table th, 
+    .log-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    /* Hide less important columns on mobile */
+    .log-table th:nth-child(n+4),
+    .log-table td:nth-child(n+4) {
+        display: none;
+    }
+}
+
+/* Enhanced touch targets for mobile */
+@media (max-width: 480px) {
+    .tab-btn {
+        padding: 1rem 0.75rem;
+        min-height: 44px;
+    }
+    
+    .pagination-btn {
+        padding: 0.75rem 1rem;
+        min-height: 44px;
+    }
+    
+    .summary-card {
+        padding: 0.75rem;
+    }
+    
+    .summary-card .card-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}

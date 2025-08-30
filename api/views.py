@@ -1,4 +1,3 @@
-import os
 import qrcode
 import logging
 import requests
@@ -6,7 +5,6 @@ import cloudinary.uploader
 from io import BytesIO
 from PIL import Image
 from django.conf import settings
-from django.shortcuts import render
 from django.db.models import Case, When, IntegerField
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
@@ -15,10 +13,18 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate, login
-from menu.models import Category, MenuItem, Order, OrderItem, QRCode
+from django.db.models import Count, Sum, F
+from django.db.models.functions import TruncHour
+from django.utils import timezone
+from datetime import timedelta
+from menu.models import (
+    Category, MenuItem, Order, OrderItem, QRCode,
+    VisitorLog, ActivityLog, DailyRevenue, Order, MenuItem
+    )
 from api.serializers import (
     CategorySerializer, MenuItemSerializer, OrderSerializer, 
-    OrderCreateSerializer, QRCodeSerializer, QRCodeCreateSerializer
+    OrderCreateSerializer, QRCodeSerializer, QRCodeCreateSerializer,
+    AnalyticsSummarySerializer, VisitorLogSerializer, ActivityLogSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -297,7 +303,14 @@ class CustomAuthToken(ObtainAuthToken):
             'user_id': user.pk,
             'username': user.username
         })
-        
+   
+
+from django.dispatch import Signal
+
+# Create custom signals for token-based authentication
+manager_logged_in = Signal()
+manager_logged_out = Signal()
+     
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def manager_login(request):
@@ -319,6 +332,21 @@ def manager_login(request):
 
     # Create or get token
     token, created = Token.objects.get_or_create(user=user)
+    
+    # # Optional: Create a session for tracking purposes
+    # if not request.session.session_key:
+    #     request.session.create()
+    
+    # # Store manager info in session for tracking
+    # request.session['manager_id'] = user.id
+    # request.session['manager_token_prefix'] = token.key[:8]  # Store first 8 chars for reference
+    # Trigger the custom login signal
+    manager_logged_in.send(
+        sender=user.__class__,
+        request=request,
+        user=user
+    )
+    
     return Response({
         'token': token.key,
         'message': 'Login successful.'
@@ -330,7 +358,178 @@ def manager_logout(request):
     try:
         if request.auth:
             request.auth.delete()
+            
+            manager_logged_out.send(
+                sender=request.user.__class__,
+                request=request,
+                user=request.user
+            )
             return Response({'detail': 'Successfully logged out.'}, status=status.HTTP_200_OK)
         return Response({'detail': 'No token found.'}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+# views.py
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def analytics_summary(request):
+    # Date range - last 30 days
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=30)
+    
+    # Visitor statistics
+    visitors = VisitorLog.objects.filter(timestamp__range=(start_date, end_date))
+    total_visitors = visitors.count()
+    total_customers = visitors.filter(visitor_type='customer').count()
+    total_managers = visitors.filter(visitor_type='manager').count()
+    
+    # Order statistics - only completed orders
+    orders = Order.objects.filter(
+        created_at__range=(start_date, end_date), 
+        status='completed'
+    )
+    total_orders = orders.count()
+    total_revenue = orders.aggregate(total=Sum('total_price'))['total'] or 0
+    
+    # Popular items (aggregated by menu item with sums)
+    popular_items = MenuItem.objects.filter(
+        orderitem__order__in=orders
+    ).annotate(
+        order_count=Count('orderitem__id', distinct=True),  # Count distinct orders
+        total_quantity=Sum('orderitem__quantity'),
+        total_revenue=Sum(F('orderitem__price_at_order') * F('orderitem__quantity'))
+    ).order_by('-total_quantity')[:10].values(
+        'id', 'name', 'order_count', 'total_quantity', 'total_revenue'
+    )
+    
+    # Popular categories (aggregated by category with sums)
+    popular_categories = Category.objects.filter(
+        menu_items__orderitem__order__in=orders
+    ).annotate(
+        order_count=Count('menu_items__orderitem__id', distinct=True),  # Count distinct orders
+        total_quantity=Sum('menu_items__orderitem__quantity'),
+        total_revenue=Sum(F('menu_items__orderitem__price_at_order') * F('menu_items__orderitem__quantity'))
+    ).order_by('-total_revenue')[:10].values(
+        'id', 'name', 'order_count', 'total_quantity', 'total_revenue'
+    )
+    
+    # Hourly order distribution (aggregate by hour)
+    hourly_orders_data = orders.annotate(
+        hour=TruncHour('created_at')
+    ).values('hour').annotate(
+        order_count=Count('id')
+    ).order_by('hour')
+    
+    # Convert to simpler format for chart
+    hourly_orders = []
+    for hour_data in hourly_orders_data:
+        hour = hour_data['hour'].hour
+        hourly_orders.append({
+            'hour': f"{hour:02d}:00",
+            'order_count': hour_data['order_count']
+        })
+    
+    # Fill in missing hours with zero values
+    hourly_orders_complete = []
+    for hour in range(24):
+        hour_str = f"{hour:02d}:00"
+        existing_hour = next((h for h in hourly_orders if h['hour'] == hour_str), None)
+        if existing_hour:
+            hourly_orders_complete.append(existing_hour)
+        else:
+            hourly_orders_complete.append({
+                'hour': hour_str,
+                'order_count': 0
+            })
+    
+    # Category revenue distribution (already aggregated above)
+    category_revenue = []
+    for category in popular_categories:
+        category_revenue.append({
+            'category': category['name'],
+            'revenue': float(category['total_revenue'] or 0),
+            'quantity': category['total_quantity'] or 0,
+        })
+    
+    # Revenue data for chart (daily aggregated)
+    revenue_data = []
+    for i in range(30):
+        date = start_date + timedelta(days=i)
+        daily_data = orders.filter(created_at__date=date).aggregate(
+            revenue=Sum('total_price'),
+            order_count=Count('id')
+        )
+        revenue_data.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'revenue': float(daily_data['revenue'] or 0),
+            'order_count': daily_data['order_count'] or 0
+        })
+    
+    # Visitor data for chart
+    visitor_data = []
+    for i in range(30):
+        date = start_date + timedelta(days=i)
+        daily_visitors = visitors.filter(timestamp__date=date).count()
+        visitor_data.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'visitors': daily_visitors
+        })
+    
+    data = {
+        'total_visitors': total_visitors,
+        'total_customers': total_customers,
+        'total_managers': total_managers,
+        'total_orders': total_orders,
+        'total_revenue': float(total_revenue),
+        'popular_items': list(popular_items),
+        'popular_categories': list(popular_categories),
+        'hourly_orders': hourly_orders_complete,
+        'category_revenue': category_revenue,
+        'revenue_data': revenue_data,
+        'visitor_data': visitor_data,
+    }
+    
+    serializer = AnalyticsSummarySerializer(data)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def visitor_logs(request):
+    page = int(request.GET.get('page', 1))
+    per_page = int(request.GET.get('per_page', 20))
+    
+    visitors = VisitorLog.objects.all().order_by('-timestamp')
+    total = visitors.count()
+    visitors = visitors[(page-1)*per_page:page*per_page]
+    
+    data = {
+        'data': VisitorLogSerializer(visitors, many=True).data,
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'total_pages': (total + per_page - 1) // per_page
+    }
+    
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def activity_logs(request):
+    page = int(request.GET.get('page', 1))
+    per_page = int(request.GET.get('per_page', 20))
+    
+    activities = ActivityLog.objects.all().order_by('-timestamp')
+    total = activities.count()
+    activities = activities[(page-1)*per_page:page*per_page]
+    
+    data = {
+        'data': ActivityLogSerializer(activities, many=True).data,
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'total_pages': (total + per_page - 1) // per_page
+    }
+    
+    return Response(data)

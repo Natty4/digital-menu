@@ -41,6 +41,11 @@ class ManagerDashboard {
         this.fetchOrders();
         this.updateStats();
         this.fetchQRCodeList();
+
+        if (this.currentSection === 'analytics') {
+            this.analyticsManager = new AnalyticsManager(this);
+            this.analyticsManager.setupAnalytics();
+        }
     }
 
 
@@ -720,6 +725,12 @@ class ManagerDashboard {
               document.getElementById(`${sectionName}-section`).classList.add("active");
 
               this.currentSection = sectionName;
+
+              // Initialize analytics if switching to analytics section
+              if (sectionName === 'analytics') {
+                  this.analyticsManager = new AnalyticsManager(this);
+                  this.analyticsManager.setupAnalytics();
+              }
               
               // Refresh data when switching to orders section
               if (sectionName === 'orders') {
@@ -1171,9 +1182,535 @@ class ManagerDashboard {
   }
 }
 
+// Analytics functionality
+class AnalyticsManager {
+    constructor(dashboard) {
+        this.dashboard = dashboard;
+        this.visitorPage = 1;
+        this.activityPage = 1;
+        this.perPage = 20;
+        this.charts = {};
+    }
+
+    setupAnalytics() {
+        this.setupTabNavigation();
+        this.setupEventListeners();
+        this.loadAnalyticsSummary();
+        this.loadVisitorLogs();
+        this.loadActivityLogs();
+    }
+
+    setupTabNavigation() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tab = e.target.dataset.tab;
+                
+                // Update active tab
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // Show correct content
+                document.querySelectorAll('.log-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tab).classList.add('active');
+            });
+        });
+    }
+
+    setupEventListeners() {
+        // Visitor log pagination
+        document.getElementById('visitor-prev').addEventListener('click', () => {
+            if (this.visitorPage > 1) {
+                this.visitorPage--;
+                this.loadVisitorLogs();
+            }
+        });
+
+        document.getElementById('visitor-next').addEventListener('click', () => {
+            this.visitorPage++;
+            this.loadVisitorLogs();
+        });
+
+        // Activity log pagination
+        document.getElementById('activity-prev').addEventListener('click', () => {
+            if (this.activityPage > 1) {
+                this.activityPage--;
+                this.loadActivityLogs();
+            }
+        });
+
+        document.getElementById('activity-next').addEventListener('click', () => {
+            this.activityPage++;
+            this.loadActivityLogs();
+        });
+
+        // Search and filter
+        document.getElementById('visitor-search').addEventListener('input', () => {
+            this.debounce(() => this.loadVisitorLogs(), 300);
+        });
+
+        document.getElementById('activity-search').addEventListener('input', () => {
+            this.debounce(() => this.loadActivityLogs(), 300);
+        });
+
+        document.getElementById('visitor-type-filter').addEventListener('change', () => {
+            this.loadVisitorLogs();
+        });
+
+        document.getElementById('activity-type-filter').addEventListener('change', () => {
+            this.loadActivityLogs();
+        });
+
+        // Timeframe filter
+        document.getElementById('analytics-timeframe').addEventListener('change', () => {
+            this.loadAnalyticsSummary();
+        });
+    }
+
+    debounce(func, wait) {
+        clearTimeout(this.debounceTimeout);
+        this.debounceTimeout = setTimeout(func, wait);
+    }
+
+    async loadAnalyticsSummary() {
+        try {
+            const timeframe = document.getElementById('analytics-timeframe').value;
+            const data = await this.dashboard.apiCall(`/analytics/summary/?days=${timeframe}`);
+            
+            if (data) {
+                this.updateSummaryCards(data);
+                this.renderCharts(data);
+            }
+        } catch (error) {
+            console.error('Error loading analytics summary:', error);
+        }
+    }
+
+  updateSummaryCards(data) {
+      document.getElementById('total-visitors').textContent = data.total_visitors.toLocaleString();
+      document.getElementById('total-customers').textContent = data.total_customers.toLocaleString();
+      document.getElementById('total-orders').textContent = data.total_orders.toLocaleString();
+      document.getElementById('total-revenue').textContent = `ETB${data.total_revenue.toLocaleString()}`;
+      
+      // Update popular items with more details
+      const popularItemsContainer = document.getElementById('popular-items-list');
+      popularItemsContainer.innerHTML = data.popular_items.map(item => `
+          <div class="popular-item">
+              <div class="item-info">
+                  <h4>${item.name}</h4>
+                  <div class="item-stats">
+                      <span class="stat">${item.total_quantity} sold</span>
+                      <span class="stat">${item.order_count} orders</span>
+                      <span class="stat revenue">ETB${(item.total_revenue || 0).toFixed(2)}</span>
+                  </div>
+              </div>
+              <div class="item-percentage">
+                  ${((item.total_quantity / data.popular_items.reduce((sum, i) => sum + i.total_quantity, 0)) * 100).toFixed(1)}%
+              </div>
+          </div>
+      `).join('');
+  }
+
+  enhanceChartTooltips() {
+    // Add custom tooltip for revenue chart
+    if (this.charts.revenue) {
+        this.charts.revenue.options.plugins.tooltip.callbacks = {
+            label: function(context) {
+                const dataset = context.dataset;
+                const value = context.raw;
+                const label = dataset.label || '';
+                
+                if (dataset.yAxisID === 'y') {
+                    return `${label}: ETB${value.toFixed(2)}`;
+                } else {
+                    return `${label}: ${value} orders`;
+                }
+            },
+            afterLabel: function(context) {
+                const datasetIndex = context.datasetIndex;
+                const dataIndex = context.dataIndex;
+                const chart = context.chart;
+                
+                if (datasetIndex === 0) { // Revenue dataset
+                    const orders = chart.data.datasets[1].data[dataIndex];
+                    const avgOrderValue = orders > 0 ? (context.raw / orders).toFixed(2) : 0;
+                    return `Avg. Order Value: ETB${avgOrderValue}`;
+                }
+                return null;
+            }
+        };
+        this.charts.revenue.update();
+    }
+}
+
+  // Call this after rendering all charts
+  renderCharts(data) {
+      this.renderRevenueChart(data.revenue_data);
+      this.renderVisitorChart(data.visitor_data);
+      this.renderItemsChart(data.popular_items);
+      this.renderCategoriesChart(data.category_revenue);
+      this.renderHourlyOrdersChart(data.hourly_orders);
+      this.enhanceChartTooltips();
+  }
+
+  renderItemsChart(itemsData) {
+    const ctx = document.getElementById('items-chart').getContext('2d');
+    
+    if (this.charts.items) {
+        this.charts.items.destroy();
+    }
+    
+    // Sort by total quantity and take top 10
+    const sortedItems = [...itemsData].sort((a, b) => b.total_quantity - a.total_quantity).slice(0, 10);
+    
+    this.charts.items = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedItems.map(item => item.name),
+            datasets: [{
+                label: 'Quantity Sold',
+                data: sortedItems.map(item => item.total_quantity),
+                backgroundColor: 'rgba(139, 69, 19, 0.7)',
+            }]
+        },
+        options: {
+            indexAxis: 'x', // Horizontal bar chart
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const item = sortedItems[context.dataIndex];
+                            return [
+                                `Quantity: ${item.total_quantity}`,
+                                `Orders: ${item.order_count}`,
+                                `Revenue: ETB${(item.total_revenue || 0).toFixed(2)}`
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+    });
+  }
+
+  renderCategoriesChart(categoriesData) {
+      const ctx = document.getElementById('categories-chart').getContext('2d');
+      
+      if (this.charts.categories) {
+          this.charts.categories.destroy();
+      }
+      
+      // Sort by revenue and take top 10
+      const sortedCategories = [...categoriesData].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+      
+      this.charts.categories = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+              labels: sortedCategories.map(cat => cat.category),
+              datasets: [{
+                  data: sortedCategories.map(cat => cat.revenue),
+                  backgroundColor: [
+                      '#8B4513', '#A0522D', '#CD853F', '#D2B48C', '#DEB887',
+                      '#5D4037', '#7D5D3B', '#9D7D5F', '#BD9D7F', '#DDBD9F'
+                  ]
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: {
+                      position: 'right',
+                  },
+                  tooltip: {
+                      callbacks: {
+                          label: function(context) {
+                              const category = sortedCategories[context.dataIndex];
+                              return [
+                                  `Revenue: ETB${context.raw.toFixed(2)}`,
+                                  `Quantity: ${category.quantity}`,
+                                  `Orders: ${category.order_count}`
+                              ];
+                          }
+                      }
+                  }
+              }
+          }
+      });
+  }
+
+  renderHourlyOrdersChart(hourlyData) {
+      const ctx = document.getElementById('hourly-orders-chart').getContext('2d');
+      
+      if (this.charts.hourlyOrders) {
+          this.charts.hourlyOrders.destroy();
+      }
+      
+      this.charts.hourlyOrders = new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: hourlyData.map(data => data.hour),
+              datasets: [{
+                  label: 'Orders',
+                  data: hourlyData.map(data => data.order_count),
+                  backgroundColor: 'rgba(93, 64, 55, 0.7)',
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: {
+                      position: 'top',
+                  }
+              },
+              scales: {
+                  x: {
+                      title: {
+                          display: true,
+                          text: 'Hour of Day'
+                      }
+                  },
+                  y: {
+                      title: {
+                          display: true,
+                          text: 'Number of Orders'
+                      },
+                      beginAtZero: true
+                  }
+              }
+          }
+      });
+  }
+
+  // Update the revenue chart to show both revenue and orders
+  renderRevenueChart(revenueData) {
+      const ctx = document.getElementById('revenue-chart').getContext('2d');
+      
+      if (this.charts.revenue) {
+          this.charts.revenue.destroy();
+      }
+      
+      this.charts.revenue = new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: revenueData.map(d => d.date),
+              datasets: [
+                  {
+                      label: 'Daily Revenue (ETB)',
+                      data: revenueData.map(d => d.revenue),
+                      borderColor: '#8B4513',
+                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                      fill: true,
+                      tension: 0.4,
+                      yAxisID: 'y'
+                  },
+                  {
+                      label: 'Number of Orders',
+                      data: revenueData.map(d => d.order_count),
+                      borderColor: '#5D4037',
+                      backgroundColor: 'rgba(93, 64, 55, 0.1)',
+                      fill: true,
+                      tension: 0.4,
+                      yAxisID: 'y1'
+                  }
+              ]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: {
+                      position: 'top',
+                  }
+              },
+              scales: {
+                  y: {
+                      type: 'linear',
+                      display: true,
+                      position: 'left',
+                      title: {
+                          display: true,
+                          text: 'Revenue (ETB)'
+                      }
+                  },
+                  y1: {
+                      type: 'linear',
+                      display: true,
+                      position: 'right',
+                      title: {
+                          display: true,
+                          text: 'Orders'
+                      },
+                      grid: {
+                          drawOnChartArea: false,
+                      },
+                  }
+              }
+          }
+      });
+  }
+
+  renderVisitorChart(visitorData) {
+    const ctx = document.getElementById('visitor-chart').getContext('2d');
+    
+    if (this.charts.visitor) {
+        this.charts.visitor.destroy();
+    }
+    
+    this.charts.visitor = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: visitorData.map(d => d.date),
+            datasets: [{
+                label: 'Daily Visitors',
+                data: visitorData.map(d => d.visitors),
+                backgroundColor: 'rgba(139, 69, 19, 0.7)',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+  }
+
+
+
+    async loadVisitorLogs() {
+        try {
+            const search = document.getElementById('visitor-search').value;
+            const typeFilter = document.getElementById('visitor-type-filter').value;
+            
+            let url = `/analytics/visitors/?page=${this.visitorPage}&per_page=${this.perPage}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (typeFilter) url += `&type=${typeFilter}`;
+            
+            const data = await this.dashboard.apiCall(url);
+            
+            if (data) {
+                this.renderVisitorLogs(data);
+            }
+        } catch (error) {
+            console.error('Error loading visitor logs:', error);
+        }
+    }
+
+    renderVisitorLogs(data) {
+        const tbody = document.getElementById('visitor-log-body');
+        tbody.innerHTML = data.data.map(visitor => `
+            <tr>
+                <td><span class="badge ${visitor.visitor_type}">${visitor.visitor_type}</span></td>
+                <td>${visitor.page_visited}</td>
+                <td>${visitor.os || 'N/A'}</td>
+                <td>${visitor.device || 'N/A'}</td>
+                <td>${new Date(visitor.timestamp).toLocaleString()}</td>
+                <td>${visitor.duration}s</td>
+            </tr>
+        `).join('');
+        
+        // Update pagination info
+        document.getElementById('visitor-page-info').textContent = 
+            `Page ${data.page} of ${data.total_pages}`;
+        
+        // Update button states
+        document.getElementById('visitor-prev').disabled = data.page <= 1;
+        document.getElementById('visitor-next').disabled = data.page >= data.total_pages;
+    }
+
+    async loadActivityLogs() {
+        try {
+            const search = document.getElementById('activity-search').value;
+            const typeFilter = document.getElementById('activity-type-filter').value;
+            
+            let url = `/analytics/activities/?page=${this.activityPage}&per_page=${this.perPage}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (typeFilter) url += `&type=${typeFilter}`;
+            
+            const data = await this.dashboard.apiCall(url);
+            
+            if (data) {
+                this.renderActivityLogs(data);
+            }
+        } catch (error) {
+            console.error('Error loading activity logs:', error);
+        }
+    }
+
+    renderActivityLogs(data) {
+        const tbody = document.getElementById('activity-log-body');
+        tbody.innerHTML = data.data.map(activity => `
+            <tr>
+                <td>${this.formatActivityType(activity.activity_type)}</td>
+                <td>${activity.username || 'System'}</td>
+                <td>${this.formatActivityDetails(activity)}</td>
+                <td>${new Date(activity.timestamp).toLocaleString()}</td>
+            </tr>
+        `).join('');
+        
+        // Update pagination info
+        document.getElementById('activity-page-info').textContent = 
+            `Page ${data.page} of ${data.total_pages}`;
+        
+        // Update button states
+        document.getElementById('activity-prev').disabled = data.page <= 1;
+        document.getElementById('activity-next').disabled = data.page >= data.total_pages;
+    }
+
+    formatActivityType(type) {
+        const types = {
+            'menu_view': 'Menu View',
+            'category_view': 'Category View',
+            'item_view': 'Item View',
+            'order_placed': 'Order Placed',
+            'qr_generated': 'QR Generated',
+            'item_created': 'Item Created',
+            'item_updated': 'Item Updated',
+            'item_deleted': 'Item Deleted',
+            'login': 'Login',
+            'logout': 'Logout'
+        };
+        return types[type] || type;
+    }
+
+    formatActivityDetails(activity) {
+        try {
+            const details = activity.details;
+            if (typeof details === 'string') {
+                return details;
+            }
+            
+            switch(activity.activity_type) {
+                case 'order_placed':
+                    return `Order #${details.order_id} - Table ${details.table_number} - ETB${details.total_amount}`;
+                case 'item_created':
+                case 'item_updated':
+                case 'item_deleted':
+                    return `${details.item_name} (ID: ${details.item_id})`;
+                case 'qr_generated':
+                    return `QR for Table ${details.table_number}`;
+                case 'login':
+                case 'logout':
+                    return `IP: ${details.ip_address}`;
+                default:
+                    return JSON.stringify(details);
+            }
+        } catch (e) {
+            return 'N/A';
+        }
+    }
+}
+
 // Initialize manager dashboard
 const manager = new ManagerDashboard()
 
 // document.addEventListener('DOMContentLoaded', function() {
 //     window.manager = new ManagerDashboard();
 // });
+

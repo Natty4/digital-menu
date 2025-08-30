@@ -2,8 +2,10 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from api.views import (
     CategoryViewSet, MenuItemViewSet, OrderViewSet, 
-    QRCodeViewSet, menu_list, menu_by_uuid, manager_login,
+    QRCodeViewSet, 
+    menu_list, menu_by_uuid, manager_login,
     manager_logout,
+    analytics_summary, visitor_logs, activity_logs
 
 )
 
@@ -17,8 +19,14 @@ urlpatterns = [
     path('', include(router.urls)),
     path('menu/', menu_list, name='menu-list'),
     path('menu/<uuid:uuid>/', menu_by_uuid, name='menu-by-uuid'),
-    # path('manager/login/', CustomAuthToken.as_view(), name='manager-login'),
+   
+    # Auth
     path('manager/login/', manager_login, name='manager-login'),
     path('manager/logout/', manager_logout, name='manager-logout'),
+    
+    # Analytics
+    path('analytics/summary/', analytics_summary, name='analytics-summary'),
+    path('analytics/visitors/', visitor_logs, name='visitor-logs'),
+    path('analytics/activities/', activity_logs, name='activity-logs'),
     
 ]
