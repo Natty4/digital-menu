@@ -298,10 +298,39 @@ class CustomAuthToken(ObtainAuthToken):
             'username': user.username
         })
         
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def manager_login(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    if not username or not password:
+        return Response(
+            {'detail': 'Username and password are required.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = authenticate(username=username, password=password)
+    if not user:
+        return Response(
+            {'detail': 'Invalid credentials.'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    # Create or get token
+    token, created = Token.objects.get_or_create(user=user)
+    return Response({
+        'token': token.key,
+        'message': 'Login successful.'
+    }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def manager_logout(request):
-    # Delete the token from the database
-    request.auth.delete()
-    return Response({'detail': 'Successfully logged out.'})
+    try:
+        if request.auth:
+            request.auth.delete()
+            return Response({'detail': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+        return Response({'detail': 'No token found.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

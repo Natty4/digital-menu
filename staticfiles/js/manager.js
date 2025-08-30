@@ -25,6 +25,25 @@ class ManagerDashboard {
             this.showLoginModal();
         }
     }
+
+
+    initializeDashboard() {
+        // Only initialize the dashboard if authenticated
+        if (!this.isAuthenticated) return;
+        
+        this.setupNavigation();
+        this.setupMenuManagement();
+        this.setupCategoryManagement();
+        this.setupQRGenerator();
+        this.setupOrderManagement();
+        this.fetchMenuItems();
+        this.fetchCategories();
+        this.fetchOrders();
+        this.updateStats();
+        this.fetchQRCodeList();
+    }
+
+
     // Function to get the CSRF token from cookies
     getCSRFToken() {
       const name = 'csrftoken=';
@@ -54,91 +73,7 @@ class ManagerDashboard {
                 }
             });
         }
-    }
-
-    async verifyToken() {
-        try {
-            this.showLoading();
-            const response = await fetch('/api/menu_items/', {
-                headers: {
-                    'Authorization': `Token ${this.authToken}`,
-                    'X-CSRFToken': this.getCSRFToken()
-                }
-            });
-            
-            if (response.ok) {
-                this.isAuthenticated = true;
-                this.hideLoginModal();
-                this.showManagerContent();
-                this.initializeDashboard();
-            } else {
-                // Token is invalid
-                localStorage.removeItem('managerToken');
-                this.authToken = null;
-                this.showLoginModal();
-            }
-        } catch (error) {
-            console.error('Token verification failed:', error);
-            localStorage.removeItem('managerToken');
-            this.authToken = null;
-            this.showLoginModal();
-        } finally {
-            this.hideLoading();
-        }
-    }
-
-    async handleLogin() {
-        const username = document.getElementById('manager-username').value;
-        const password = document.getElementById('manager-password').value;
-        const errorElement = document.getElementById('login-error');
-        
-        // Clear previous errors
-        if (errorElement) {
-            errorElement.classList.add('hidden');
-        }
-        
-        if (!username || !password) {
-            this.showError('Please enter both username and password');
-            return;
-        }
-        
-        try {
-            this.showLoading();
-            const response = await fetch('/api/manager/login/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCSRFToken()
-                },
-                body: JSON.stringify({ username, password })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                this.authToken = data.token;
-                localStorage.setItem('managerToken', this.authToken);
-                this.isAuthenticated = true;
-                
-                this.hideLoginModal();
-                this.showManagerContent();
-                this.initializeDashboard();
-                
-            } else {
-                const errorData = await response.json();
-                const errorMessage = errorData.non_field_errors ? 
-                    errorData.non_field_errors[0] : 
-                    'Login failed. Please check your credentials.';
-                
-                this.showError(errorMessage);
-                console.log(errorData, '--------------');
-            }
-        } catch (error) {
-            this.showError('Network error. Please try again.');
-            console.error('Login error:', error);
-        } finally {
-            this.hideLoading();
-        }
-    }
+    }   
 
     showError(message) {
         const errorElement = document.getElementById('login-error');
@@ -147,7 +82,7 @@ class ManagerDashboard {
             errorElement.classList.remove('hidden');
         }
     }
-
+    
     showLoginModal() {
         const loginModal = document.getElementById('manager-login-modal');
         const managerContent = document.getElementById('manager-content');
@@ -156,8 +91,9 @@ class ManagerDashboard {
         if (managerContent) managerContent.classList.add('hidden');
         
         // Focus on password field
-        const passwordInput = document.getElementById('manager-password');
-        if (passwordInput) passwordInput.focus();
+        const usernameInput = document.getElementById('manager-username');
+        if (usernameInput) usernameInput.focus();
+
     }
 
     hideLoginModal() {
@@ -170,25 +106,7 @@ class ManagerDashboard {
         if (managerContent) managerContent.classList.remove('hidden');
     }
 
-    initializeDashboard() {
-        // Only initialize the dashboard if authenticated
-        if (!this.isAuthenticated) return;
-        
-        this.setupNavigation();
-        this.setupMenuManagement();
-        this.setupCategoryManagement();
-        this.setupQRGenerator();
-        this.setupOrderManagement();
-        this.fetchMenuItems();
-        this.fetchCategories();
-        this.fetchOrders();
-        this.updateStats();
-        this.fetchQRCodeList();
-    }
-
-
-  
-   // Function to show toaster messages
+  // Function to show toaster messages
   showToast(message, type = 'error') {
       const toastContainer = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -231,22 +149,36 @@ class ManagerDashboard {
   }
   
   // API Functions
-  async apiCall(endpoint, options = {}) {
+  async apiCall(endpoint, options = {}, requireAuth = true) {
+        this.activeRequests++;
         this.showLoading();
-        
+
         const defaultOptions = {
-            headers: {
-                'Authorization': `Token ${this.authToken}`
-            }
+            headers: {}
         };
 
-        // Only set Content-Type for non-FormData requests
+        // Only add Authorization header for authenticated endpoints
+        if (requireAuth && this.authToken) {
+            defaultOptions.headers['Authorization'] = `Token ${this.authToken}`;
+        }
+
+        if (options.method === 'POST' && endpoint !== '/manager/login/') {
+            defaultOptions.headers['X-CSRFToken'] = this.getCSRFToken();
+        }
+        // Set Content-Type for non-FormData requests
         if (!(options.body instanceof FormData)) {
             defaultOptions.headers['Content-Type'] = 'application/json';
         }
-        
-        const finalOptions = { ...defaultOptions, ...options };
-        
+
+        const finalOptions = {
+            ...defaultOptions,
+            ...options,
+            headers: {
+                ...defaultOptions.headers,
+                ...options.headers
+            }
+        };
+
         try {
             const response = await fetch(`${window.location.origin}/api${endpoint}`, finalOptions);
 
@@ -255,21 +187,23 @@ class ManagerDashboard {
                 this.authToken = null;
                 this.isAuthenticated = false;
                 this.showLoginModal();
-                this.showToast('Session expired. Please log in again.');
+                this.showToast('Session expired. Please log in again.', 'error');
                 return null;
             }
-            
+
             if (response.status === 204) {
                 return { status: 204 };
             }
-            
+
+            const data = await response.json();
+
             if (!response.ok) {
-                const errorData = await response.json();
-                this.showToast(errorData?.detail || `API error: ${response.status}`);
-                throw new Error(errorData?.detail || `API error: ${response.status}`);
+                console.error('API response:', data);
+                this.showToast(data?.detail || data?.error || `API error: ${response.status}`, 'error');
+                throw new Error(data?.detail || data?.error || `API error: ${response.status}`);
             }
-            
-            return await response.json();
+
+            return data;
         } catch (error) {
             console.error('API call failed:', error);
             throw error;
@@ -281,21 +215,118 @@ class ManagerDashboard {
         }
     }
 
-   async logout() {
-    try {
-        // Try to call the logout endpoint to invalidate the token server-side
-        await this.apiCall('/manager/logout/', {
-            method: 'POST'
-        });
-    } catch (error) {
-        console.error('Logout API call failed, but proceeding with client-side logout:', error);
-        // Continue with client-side logout even if API call fails
-    } finally {
-        localStorage.removeItem('managerToken');
-        window.location.href = '/manager_login.html';
-    }
+  async verifyToken() {
+      if (!this.authToken) {
+          this.isAuthenticated = false;
+          this.showLoginModal();
+          return;
+      }
+
+      try {
+          const data = await this.apiCall('/menu_items/', { method: 'GET' });
+          if (data) {
+              this.isAuthenticated = true;
+              this.hideLoginModal();
+              this.showManagerContent();
+              this.initializeDashboard();
+          } else {
+              // Token invalid or API call failed
+              localStorage.removeItem('managerToken');
+              this.authToken = null;
+              this.isAuthenticated = false;
+              this.showLoginModal();
+          }
+      } catch (error) {
+          console.error('Token verification failed:', error);
+          localStorage.removeItem('managerToken');
+          this.authToken = null;
+          this.isAuthenticated = false;
+          this.showLoginModal();
+          this.showToast('Invalid or expired token. Please log in again.', 'error');
+      }
   }
 
+  async handleLogin() {
+      const usernameInput = document.getElementById('manager-username');
+      const passwordInput = document.getElementById('manager-password');
+      const username = usernameInput?.value;
+      const password = passwordInput?.value;
+
+      // Validate inputs
+      if (!username || !password) {
+          this.showToast('Please enter both username and password', 'error');
+          return;
+      }
+
+      try {
+          // Clear any existing token to prevent duplicates
+          localStorage.removeItem('managerToken');
+          this.authToken = null;
+          this.isAuthenticated = false;
+
+          const data = await this.apiCall('/manager/login/', {
+              method: 'POST',
+              body: JSON.stringify({ username, password })
+          }, false); // No auth required for login
+
+          if (!data) {
+              // apiCall already handled errors with toasts
+              return;
+          }
+
+          // Login successful
+          this.authToken = data.token;
+          localStorage.setItem('managerToken', this.authToken);
+          this.isAuthenticated = true;
+
+          // Update UI
+          try {
+              this.hideLoginModal();
+              this.showManagerContent();
+              this.initializeDashboard();
+              this.showToast('Login successful.', 'success');
+          } catch (uiError) {
+              console.error('UI update failed after login:', uiError);
+              this.showToast('Login successful, but UI update failed. Please refresh the page.', 'warning');
+          }
+
+          // Clear input fields
+          if (usernameInput) usernameInput.value = '';
+          if (passwordInput) passwordInput.value = '';
+      } catch (error) {
+          console.error('Login error:', error);
+          // apiCall already shows error toasts
+      }
+  }
+
+  async logout() {
+      try {
+          const data = await this.apiCall('/manager/logout/', {
+              method: 'POST'
+          });
+          if (data) {
+              this.showToast('Successfully logged out.', 'success');
+          }
+      } catch (error) {
+          console.error('Logout API call failed:', error);
+        
+      }
+
+      // Perform client-side cleanup
+      localStorage.removeItem('managerToken');
+      this.authToken = null;
+      this.isAuthenticated = false;
+
+      // Update UI
+      try {
+          this.hideManagerContent();
+          this.showLoginModal();
+      } catch (uiError) {
+          console.error('UI update failed during logout:', uiError);
+          this.showToast('Logout successful, but UI update failed. Please refresh the page.', 'warning');
+      }
+  }
+    
   async fetchMenuItems() {
       try {
           const data = await this.apiCall('/menu_items/');
@@ -405,8 +436,6 @@ class ManagerDashboard {
         this.isSaving = false;
     }
   }
-
-
 
   clearMenuItemModal() {
     // Clear all fields in the modal
@@ -667,14 +696,6 @@ class ManagerDashboard {
       imgWindow.print();
   }
 
-
-  logout() {
-        localStorage.removeItem('managerToken');
-        this.authToken = null;
-        this.isAuthenticated = false;
-        this.showLoginModal();
-        this.hideManagerContent();
-    }
 
   hideManagerContent() {
       const managerContent = document.getElementById('manager-content');
