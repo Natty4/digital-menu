@@ -24,7 +24,15 @@ class ManagerDashboard {
             this.showLoginModal();
         }
     }
-
+    // Function to get the CSRF token from cookies
+    getCSRFToken() {
+      const name = 'csrftoken=';
+      const value = document.cookie.split(';').find(row => row.startsWith(name));
+      if (value) {
+        return value.split('=')[1];
+      }
+      return '';
+    }
     setupLoginModal() {
         // Login button event
         document.getElementById('manager-login-btn').addEventListener('click', () => {
@@ -53,7 +61,7 @@ class ManagerDashboard {
             const response = await fetch('/api/menu_items/', {
                 headers: {
                     'Authorization': `Token ${this.authToken}`,
-                    'X-CSRFToken': getCSRFToken()
+                    'X-CSRFToken': this.getCSRFToken()
                 }
             });
             
@@ -99,6 +107,7 @@ class ManagerDashboard {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
                 },
                 body: JSON.stringify({ username, password })
             });
@@ -120,6 +129,7 @@ class ManagerDashboard {
                     'Login failed. Please check your credentials.';
                 
                 this.showError(errorMessage);
+                console.log(errorData, '--------------');
             }
         } catch (error) {
             this.showError('Network error. Please try again.');
