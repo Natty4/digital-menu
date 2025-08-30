@@ -735,9 +735,15 @@ body {
   width: 100%;
   max-width: 24rem;
   max-height: 90vh;
-  overflow: hidden;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   box-shadow: 0 8px 32px rgba(91, 58, 41, 0.1);
   /* animation: slideUp 0.1s ease-out; */
+}
+
+.item-modal-content::-webkit-scrollbar {
+  display: none;
 }
 
 .item-modal-header {
