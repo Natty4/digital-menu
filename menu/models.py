@@ -1,5 +1,6 @@
 import os
 import uuid
+import cloudinary.uploader
 from django.db import models
 from django.conf import settings
 from cloudinary.models import CloudinaryField
@@ -19,16 +20,25 @@ class MenuItem(models.Model):
     image = CloudinaryField('image', null=True, blank=True, folder='menu_items')
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='menu_items')
     is_available = models.BooleanField(default=True)
-
     
     @property
     def image_url(self):
-        if self.image and hasattr(self.image, 'url'):
+        if self.image:
+            # CloudinaryField automatically provides url property
             return self.image.url
         return None
     
     def __str__(self):
         return self.name
+    
+    def delete(self, *args, **kwargs):
+        # Delete image from Cloudinary when menu item is deleted
+        if self.image:
+            try:
+                cloudinary.uploader.destroy(self.image.public_id)
+            except:
+                pass  # Ignore errors if image doesn't exist on Cloudinary
+        super().delete(*args, **kwargs)
 
 
 class Order(models.Model):

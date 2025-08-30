@@ -308,46 +308,61 @@ class ManagerDashboard {
 
     // Append all fields to form data
     Object.keys(itemData).forEach(key => {
-      if (key === 'image' && itemData[key] instanceof File) {
-        formData.append('image', itemData[key]);
-      } else {
-        formData.append(key, itemData[key]);
-      }
+        if (key === 'image' && itemData[key] instanceof File) {
+            formData.append('image', itemData[key]);
+        } else if (key === 'category') {
+            // Ensure category is sent as ID
+            formData.append('category', itemData[key]);
+        } else if (key !== 'image') { // Skip image field if it's not a File
+            formData.append(key, itemData[key]);
+        }
     });
 
-    let endpoint = '/menu_items/';
+    let endpoint = '/api/menu_items/';
     let method = 'POST';
 
     if (this.editingItemId) {
-      endpoint = `/menu_items/${this.editingItemId}/`;
-      method = 'PUT';
+        endpoint = `/api/menu_items/${this.editingItemId}/`;
+        method = 'PUT';
     }
 
     const options = {
-      method: method,
-      headers: {
-        'Authorization': `Token ${this.authToken}`,
-      },
-      body: formData
+        method: method,
+        headers: {
+            'Authorization': `Token ${this.authToken}`,
+            // Note: Don't set Content-Type for FormData, let browser set it with boundary
+        },
+        body: formData
     };
 
     // Remove Content-Type header for FormData (browser will set it with boundary)
     delete options.headers['Content-Type'];
 
     try {
-      const data = await this.apiCall(endpoint, options);
-      
-      if (data) {
+        this.showLoading();
+        const response = await fetch(endpoint, options);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || errorData.message || 'Failed to save menu item');
+        }
+        
+        const data = await response.json();
         await this.fetchMenuItems(); // Refresh the list
-        this.clearMenuItemModal(); // Optional: Clear form after save
-        document.getElementById("menu-item-modal").classList.add("hidden"); // Hide modal
+        this.clearMenuItemModal();
+        document.getElementById("menu-item-modal").classList.add("hidden");
         this.showToast('Menu item saved successfully.', 'success');
-      }
+        return data;
     } catch (error) {
-      console.error('Error saving menu item:', error);
-      this.showToast('There was an error saving the menu item. Please try again.');
+        console.error('Error saving menu item:', error);
+        this.showToast(error.message || 'There was an error saving the menu item. Please try again.');
+        throw error;
+    } finally {
+        this.hideLoading();
     }
   }
+
+
 
   clearMenuItemModal() {
     // Clear all fields in the modal
@@ -833,34 +848,56 @@ class ManagerDashboard {
     }
   }
 
+  validateImage(file) {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    
+    if (file.size > maxSize) {
+        throw new Error('Image size must be less than 5MB');
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+        throw new Error('Please upload a JPEG, PNG, or WebP image');
+    }
+    
+    return true;
+  }
+
+  // Update the handleSaveMenuItemForm method
   handleSaveMenuItemForm() {
-    const name = document.getElementById("item-name-input").value;
-    const price = Number.parseFloat(document.getElementById("item-price-input").value);
-    const description = document.getElementById("item-description-input").value;
-    const categoryId = document.getElementById("item-category-input").value; // This grabs the category ID from the select dropdown
-    const available = document.getElementById("item-available-input").checked;
-    const fileInput = document.getElementById("item-image-input");
+      const name = document.getElementById("item-name-input").value;
+      const price = Number.parseFloat(document.getElementById("item-price-input").value);
+      const description = document.getElementById("item-description-input").value;
+      const categoryId = document.getElementById("item-category-input").value;
+      const available = document.getElementById("item-available-input").checked;
+      const fileInput = document.getElementById("item-image-input");
 
-    // Validate fields
-    if (!name || !price || !categoryId) {  // Ensure categoryId is present
-      this.showToast("Please fill in all required fields");
-      return;
-    }
+      // Validate fields
+      if (!name || !price || !categoryId) {
+          this.showToast("Please fill in all required fields");
+          return;
+      }
 
-    const itemData = {
-      name,
-      price,
-      description,
-      category: categoryId,  // Send the selected category ID here
-      is_available: available
-    };
+      const itemData = {
+          name,
+          price,
+          description,
+          category: categoryId,
+          is_available: available
+      };
 
-    // Add image file if selected
-    if (fileInput.files[0]) {
-      itemData.image = fileInput.files[0];
-    }
+      // Add image file if selected
+      if (fileInput.files[0]) {
+          try {
+              this.validateImage(fileInput.files[0]);
+              itemData.image = fileInput.files[0];
+          } catch (error) {
+              this.showToast(error.message);
+              return;
+          }
+      }
 
-    this.saveMenuItem(itemData);
+      this.saveMenuItem(itemData);
   }
 
   openCategoryModal(cat = null) {

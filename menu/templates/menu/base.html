@@ -4,7 +4,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}TK-Brown Coffee{% endblock %}</title>
+    <title>{% block title %}TK-Brown Coffee - Digital Menu{% endblock %}</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Explore the digital menu at TK-Brown Coffee. Browse our delicious coffee, tea, and food offerings, and place your order online with ease in Hawassa.">
+    <meta name="keywords" content="TK-Brown Coffee, digital menu, coffee shop, Hawassa, order coffee online, cafe menu, Ethiopian coffee">
+    <meta name="author" content="TK-Brown Coffee">
+    <meta name="robots" content="index, follow">
+    <!-- Open Graph Meta Tags for Social Media -->
+    <meta property="og:title" content="TK-Brown Coffee - Digital Menu">
+    <meta property="og:description" content="Discover and order from TK-Brown Coffee's digital menu. Enjoy premium coffee and food in Hawassa.">
+    <meta property="og:image" content="{% static 'images/coffee-shop.jpg' %}">
+    <meta property="og:url" content="https://www.tkbrowncoffee.com">
+    <meta property="og:type" content="website">
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TK-Brown Coffee - Digital Menu">
+    <meta name="twitter:description" content="Browse and order from TK-Brown Coffee's digital menu in Hawassa.">
+    <meta name="twitter:image" content="{% static 'images/coffee-shop.jpg' %}">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.tkbrowncoffee.com">
+    <!-- Structured Data (JSON-LD) for Restaurant -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": "TK-Brown Coffee",
+        "description": "TK-Brown Coffee offers a premium coffee and dining experience in Hawassa. Browse our digital menu and order online.",
+        "url": "https://www.tkbrowncoffee.com",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Infront of Hawassa University",
+            "addressLocality": "Hawassa",
+            "addressCountry": "ET"
+        },
+        "servesCuisine": ["Coffee", "Ethiopian", "International"],
+        "menu": "https://www.tkbrowncoffee.com/menu",
+        "telephone": "+251-924-325-817",
+        "openingHours": [
+            "Mo-Fr 07:00-22:00",
+            "Sa-Su 08:00-22:00"
+        ],
+        "image": "{% static 'images/coffee-shop.jpg' %}"
+    }
+    </script>
     <link rel="stylesheet" href="{% static 'css/fontawesome.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_css %}{% endblock %}
@@ -51,7 +95,7 @@
             </div>
             <div class="item-modal-body">
                 <div class="item-modal-image">
-                    <img id="item-modal-img" src="https://plakarestaurant.ca/wp-content/themes/twentytwentythree-child/img/food-placeholder.png" alt="" />
+                    <img id="item-modal-img" src="https://plakarestaurant.ca/wp-content/themes/twentytwentythree-child/img/food-placeholder.png" alt="Coffee or Food Item at TK-Brown Coffee" />
                 </div>
                 <div class="item-modal-info">
                     <h2 id="item-modal-name"></h2>
@@ -61,18 +105,6 @@
                         <button id="item-modal-add-btn" class="btn btn-primary">Add to Cart</button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Manager Login Modal -->
-    <div id="manager-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Manager Access</h2>
-            <input type="password" id="manager-password" placeholder="Enter password" />
-            <div class="modal-buttons">
-                <button id="manager-login-btn" class="btn btn-primary">Login</button>
-                <button id="manager-cancel-btn" class="btn btn-outline">Cancel</button>
             </div>
         </div>
     </div>

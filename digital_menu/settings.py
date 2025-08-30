@@ -147,4 +147,3 @@ cloudinary_config = {
 config(**cloudinary_config)
 
 SUPERUSER_PASSWORD = os.getenv('SUPERUSER_PASSWORD', 'admin')
-

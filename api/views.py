@@ -34,15 +34,47 @@ class MenuItemViewSet(viewsets.ModelViewSet):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
     permission_classes = [IsAuthenticated]
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [AllowAny()]
-        return [IsAuthenticated()]
-    
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def create(self, request, *args, **kwargs):
-        print("Request Data:", request.data)  # Log incoming data
-        return super().create(request, *args, **kwargs)
+        print("CREATE REQUEST DATA:", request.data)  # Debug print
+        print("CREATE REQUEST FILES:", request.FILES)  # Debug print
+        
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except Exception as e:
+            print("CREATE VIEW ERROR:", str(e))
+            return Response(
+                {'error': str(e), 'details': serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def update(self, request, *args, **kwargs):
+        print("UPDATE REQUEST DATA:", request.data)  # Debug print
+        print("UPDATE REQUEST FILES:", request.FILES)  # Debug print
+        
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except Exception as e:
+            print("UPDATE VIEW ERROR:", str(e))
+            return Response(
+                {'error': str(e), 'details': serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class OrderViewSet(viewsets.ModelViewSet):

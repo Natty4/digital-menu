@@ -1,5 +1,7 @@
+import cloudinary.uploader
 from rest_framework import serializers
 from menu.models import Category, MenuItem, Order, OrderItem, QRCode
+
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -9,25 +11,47 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
-    # For POST/PUT, the category will be just an ID (PrimaryKey)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    
-    # For GET requests, we use the CategorySerializer to include full category details
     category_details = CategorySerializer(source='category', read_only=True)
-    
     image_url = serializers.SerializerMethodField()
     image = serializers.ImageField(required=False, allow_null=True)
-    
+
     class Meta:
         model = MenuItem
         fields = ['id', 'name', 'description', 'price', 'image', 'image_url', 'category', 'category_details', 'is_available']
-    
+
     def get_image_url(self, obj):
-        request = self.context.get('request')
         if obj.image:
+            request = self.context.get('request')
             return request.build_absolute_uri(obj.image.url) if request else obj.image.url
         return None
 
+    def create(self, validated_data):
+        print("CREATE VALIDATED DATA:", validated_data)  # Debug print
+        
+        # Let Django handle the image storage (temporary fallback)
+        try:
+            menu_item = MenuItem.objects.create(**validated_data)
+            print("MENU ITEM CREATED SUCCESSFULLY:", menu_item.id)
+            return menu_item
+        except Exception as e:
+            print("CREATE ERROR:", str(e))
+            raise serializers.ValidationError(f"Error creating menu item: {str(e)}")
+
+    def update(self, instance, validated_data):
+        print("UPDATE VALIDATED DATA:", validated_data)  # Debug print
+        
+        # Let Django handle the image storage (temporary fallback)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        try:
+            instance.save()
+            print("MENU ITEM UPDATED SUCCESSFULLY:", instance.id)
+            return instance
+        except Exception as e:
+            print("UPDATE ERROR:", str(e))
+            raise serializers.ValidationError(f"Error updating menu item: {str(e)}")
 
 class OrderItemSerializer(serializers.ModelSerializer):
     menu_item_name = serializers.CharField(source='menu_item.name', read_only=True)
