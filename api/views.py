@@ -382,7 +382,7 @@ def analytics_summary(request):
     # Visitor statistics
     visitors = VisitorLog.objects.filter(timestamp__range=(start_date, end_date))
     total_visitors = visitors.count()
-    total_customers = visitors.filter(visitor_type='customer').count()
+    total_customers = visitors.filter(visitor_type='customer').filter(page_visited__in=['/', '/api/menu/']).count()
     total_managers = visitors.filter(visitor_type='manager').count()
     
     # Order statistics - only completed orders
@@ -500,7 +500,7 @@ def visitor_logs(request):
     page = int(request.GET.get('page', 1))
     per_page = int(request.GET.get('per_page', 20))
     
-    visitors = VisitorLog.objects.all().order_by('-timestamp')
+    visitors = VisitorLog.objects.filter(page_visited__in=['/', '/api/menu/']).order_by('-timestamp')
     total = visitors.count()
     visitors = visitors[(page-1)*per_page:page*per_page]
     

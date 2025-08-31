@@ -74,19 +74,21 @@ def log_user_logout(sender, request, user, **kwargs):
 # Add new signals for token-based authentication
 @receiver(manager_logged_in)
 def log_manager_login(sender, request, user, **kwargs):
-    ActivityLog.objects.create(
-        activity_type='login',
-        user=user,
-        details={'ip_address': get_client_ip(request), 'auth_type': 'token'}
-    )
+    if not user.is_superuser:
+        ActivityLog.objects.create(
+            activity_type='login',
+            user=user,
+            details={'ip_address': get_client_ip(request), 'auth_type': 'token'}
+        )
 
 @receiver(manager_logged_out)
 def log_manager_logout(sender, request, user, **kwargs):
-    ActivityLog.objects.create(
-        activity_type='logout',
-        user=user,
-        details={'ip_address': get_client_ip(request), 'auth_type': 'token'}
-    )
+    if not user.is_superuser:
+        ActivityLog.objects.create(
+            activity_type='logout',
+            user=user,
+            details={'ip_address': get_client_ip(request), 'auth_type': 'token'}
+        )
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
