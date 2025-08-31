@@ -5,21 +5,41 @@
 }
 
 :root {
-  /* Color system matching the design brief */
-  --background: #ffffff;
-  --foreground: #5b3a29;
-  --card: rgba(247, 242, 231, 0.8);
-  --card-foreground: #5b3a29;
-  --primary: #5b3a29;
-  --primary-foreground: #ffffff;
-  --secondary: #d1b39e;
-  --secondary-foreground: #5b3a29;
-  --muted: #f7f2e7;
-  --muted-foreground: #4b3c30;
-  --accent: #d1b39e;
-  --accent-foreground: #5b3a29;
-  --border: #e0d7c1;
+  /* Dark theme for a brand brown theme */
+  --background: #150f09;
+  --foreground: #f7f2e7;
+  --card: rgba(29, 19, 13, 0.8);
+  --card-foreground: #f7f2e7;
+  --primary: #d1b39e;
+  --primary-foreground: #150f09;
+  --secondary: #5b3a29;
+  --secondary-foreground: #ffffff;
+  --muted: #3d2b1f;
+  --muted-foreground: #e0d7c1;
+  --accent: #5b3a29;
+  --accent-foreground: #f7f2e7;
+  --border: #3d2b1f;
   --radius: 0.5rem;
+}
+
+/* Light theme override */
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #ffffff;
+    --foreground: #5b3a29;
+    --card: rgba(247, 242, 231, 0.8);
+    --card-foreground: #5b3a29;
+    --primary: #5b3a29;
+    --primary-foreground: #ffffff;
+    --secondary: #d1b39e;
+    --secondary-foreground: #5b3a29;
+    --muted: #f7f2e7;
+    --muted-foreground: #4b3c30;
+    --accent: #d1b39e;
+    --accent-foreground: #5b3a29;
+    --border: #e0d7c1;
+    --radius: 0.5rem;
+  }
 }
 
 *,
@@ -1556,6 +1576,8 @@ select {
     border: 1px solid #ddd;
     border-radius: 30px;
     font-size: 16px;
+    background-color: transparent;
+    color: var(--primary);
 }
 
 .search-bar:focus {
@@ -1643,7 +1665,7 @@ select {
 }
 
 .summary-card {
-    background: white;
+    background: var(--foreground);
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -1664,7 +1686,9 @@ select {
     border-radius: 50%;
     flex-shrink: 0;
 }
-
+.summary-card .card-content {
+  word-break: break-all;
+}
 .summary-card .card-content h3 {
     margin: 0;
     font-size: 1.4rem;
@@ -1697,7 +1721,7 @@ select {
 }
 
 .chart-container {
-    background: white;
+    background: var(--foreground);
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -1712,7 +1736,7 @@ select {
 
 /* Popular Items Responsive */
 .popular-items {
-    background: white;
+    background: var(--foreground);
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -1769,6 +1793,12 @@ select {
     background: #f0f0f0;
     border-radius: 4px;
     white-space: nowrap;
+}
+
+.popular-item .stat.order {
+    background: #e8ebf5;
+    color: #2e467d;
+    font-weight: 500;
 }
 
 .popular-item .stat.revenue {

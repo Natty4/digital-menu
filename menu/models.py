@@ -41,6 +41,8 @@ class MenuItem(models.Model):
             except:
                 pass  # Ignore errors if image doesn't exist on Cloudinary
         super().delete(*args, **kwargs)
+    class Meta:
+        ordering = ['category']
 
 
 class Order(models.Model):
@@ -94,16 +96,16 @@ class QRCode(models.Model):
         return f"QR Code for Table {self.table_number}"
 
 
-
 class VisitorLog(models.Model):
     VISITOR_TYPES = [
+        ('anonymous', 'Anonymous Visitor'),
         ('customer', 'Customer'),
         ('manager', 'Manager'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    visitor_type = models.CharField(max_length=10, choices=VISITOR_TYPES)
-    session_id = models.CharField(max_length=100, blank=True, null=True)  # Allow null and blank
+    visitor_type = models.CharField(max_length=10, choices=VISITOR_TYPES, default='anonymous')
+    session_id = models.CharField(max_length=100, blank=True, null=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
     browser = models.CharField(max_length=100, blank=True)
@@ -122,15 +124,21 @@ class VisitorLog(models.Model):
     def save(self, *args, **kwargs):
         # Parse user agent string
         if self.user_agent:
-            ua = parse(self.user_agent)
-            self.browser = f"{ua.browser.family} {ua.browser.version_string}"
-            self.os = f"{ua.os.family} {ua.os.version_string}"
-            self.device = ua.device.family
+            try:
+                ua = parse(self.user_agent)
+                self.browser = f"{ua.browser.family} {ua.browser.version_string}"
+                self.os = f"{ua.os.family} {ua.os.version_string}"
+                self.device = ua.device.family
+            except:
+                # If user agent parsing fails, still save the record
+                self.browser = 'Unknown'
+                self.os = 'Unknown'
+                self.device = 'Unknown'
         super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.visitor_type} - {self.page_visited} - {self.timestamp}"
-    
+        
 class ActivityLog(models.Model):
     ACTIVITY_TYPES = [
         ('menu_view', 'Menu View'),

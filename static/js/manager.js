@@ -1289,7 +1289,9 @@ class AnalyticsManager {
 
   updateSummaryCards(data) {
       document.getElementById('total-visitors').textContent = data.total_visitors.toLocaleString();
+      document.getElementById('total-anonymous').textContent = data.total_anonymous.toLocaleString();
       document.getElementById('total-customers').textContent = data.total_customers.toLocaleString();
+      document.getElementById('total-managers').textContent = data.total_managers.toLocaleString();
       document.getElementById('total-orders').textContent = data.total_orders.toLocaleString();
       document.getElementById('total-revenue').textContent = `ETB${data.total_revenue.toLocaleString()}`;
       
@@ -1301,7 +1303,7 @@ class AnalyticsManager {
                   <h4>${item.name}</h4>
                   <div class="item-stats">
                       <span class="stat">${item.total_quantity} sold</span>
-                      <span class="stat">${item.order_count} orders</span>
+                      <span class="stat order">${item.order_count} orders</span>
                       <span class="stat revenue">ETB${(item.total_revenue || 0).toFixed(2)}</span>
                   </div>
               </div>

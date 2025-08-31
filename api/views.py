@@ -382,6 +382,7 @@ def analytics_summary(request):
     # Visitor statistics
     visitors = VisitorLog.objects.filter(timestamp__range=(start_date, end_date))
     total_visitors = visitors.count()
+    total_anonymous = visitors.filter(visitor_type='anonymous').count()
     total_customers = visitors.filter(visitor_type='customer').filter(page_visited__in=['/', '/api/menu/']).count()
     total_managers = visitors.filter(visitor_type='manager').count()
     
@@ -479,6 +480,7 @@ def analytics_summary(request):
     
     data = {
         'total_visitors': total_visitors,
+        'total_anonymous': total_anonymous,
         'total_customers': total_customers,
         'total_managers': total_managers,
         'total_orders': total_orders,

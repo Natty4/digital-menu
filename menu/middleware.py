@@ -1,8 +1,9 @@
 import time
 from django.utils import timezone
-from .models import VisitorLog
+from .models import VisitorLog, QRCode
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework.authtoken.models import Token
+from django.http import QueryDict
 
 class VisitorTrackingMiddleware(MiddlewareMixin):
     def process_request(self, request):
@@ -23,8 +24,6 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
         
         # Don't track admin pages or API calls (except for analytics)
         if (request.path.startswith('/admin/') or 
-            (request.path.startswith('/api/') and request.path != '/api/menu/') or
-            request.path.startswith('/favicon.ico') or
             request.path.startswith('/static/') or
             request.path.startswith('/media/')):
             return response
@@ -35,7 +34,7 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
             return response
         
         # Determine visitor type and get user info
-        visitor_type = 'customer'
+        visitor_type = 'anonymous'  # Default to anonymous
         user = None
         session_id = None
         table_number = None
@@ -52,33 +51,53 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
                 # For managers, we'll use a combination of user ID and token for tracking
                 session_id = f"manager_{user.id}_{token_key[:8]}"
             except Token.DoesNotExist:
-                pass  # Not a valid token, treat as customer
+                pass  # Not a valid token, will be treated as anonymous
         
-        # Check if this is a customer with session
-        if visitor_type == 'customer' and hasattr(request, 'session'):
-            # Ensure session exists for customers
-            if not request.session.session_key:
-                try:
-                    request.session.save()
-                except:
-                    pass  # If session creation fails, we'll handle it
+        # Check if this is a customer with table_uuid query parameter
+        if visitor_type == 'anonymous':
+            # Parse query parameters
+            if request.method == 'GET':
+                query_dict = request.GET
+            elif request.method == 'POST':
+                # For POST requests, try to get from POST data or query string
+                if hasattr(request, 'POST') and isinstance(request.POST, QueryDict):
+                    query_dict = request.POST
+                else:
+                    query_dict = QueryDict(request.META.get('QUERY_STRING', ''))
+            else:
+                query_dict = QueryDict('')
             
-            if request.session.session_key:
-                session_id = request.session.session_key
-                table_number = request.session.get('table_number')
-                qr_code_id = request.session.get('qr_code_id')
-                if qr_code_id:
-                    from .models import QRCode
-                    try:
-                        qr_code = QRCode.objects.get(id=qr_code_id)
-                    except QRCode.DoesNotExist:
-                        pass
+            table_uuid = query_dict.get('table_uuid')
+            
+            if table_uuid:
+                try:
+                    qr_code = QRCode.objects.get(uuid=table_uuid)
+                    visitor_type = 'customer'
+                    table_number = qr_code.table_number
+                    
+                    # Create or get session for customer tracking
+                    if hasattr(request, 'session') and not request.session.session_key:
+                        try:
+                            request.session.save()
+                            session_id = request.session.session_key
+                        except:
+                            session_id = f"customer_{table_uuid[:8]}"
+                    elif hasattr(request, 'session'):
+                        session_id = request.session.session_key
+                    else:
+                        session_id = f"customer_{table_uuid[:8]}"
+                        
+                except (QRCode.DoesNotExist, ValueError):
+                    # Invalid UUID format or QR code not found
+                    visitor_type = 'anonymous'
+                    table_number = None
+                    qr_code = None
         
         # Create visitor log with robust error handling
         try:
             VisitorLog.objects.create(
                 visitor_type=visitor_type,
-                session_id=session_id,  # Can be None for some cases
+                session_id=session_id,  # Can be None for anonymous visitors
                 ip_address=self.get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', ''),
                 referrer=request.META.get('HTTP_REFERER', ''),
@@ -89,7 +108,6 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
             )
         except Exception as e:
             # Don't break the site if tracking fails
-            print(f"Visitor tracking error: {e}")
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Visitor tracking failed: {e}")
