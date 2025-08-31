@@ -23,7 +23,7 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
         
         # Don't track admin pages or API calls (except for analytics)
         if (request.path.startswith('/admin/') or 
-        
+            (request.path.startswith('/api/') and request.path != '/api/menu/') or
             request.path.startswith('/favicon.ico') or
             request.path.startswith('/static/') or
             request.path.startswith('/media/')):
