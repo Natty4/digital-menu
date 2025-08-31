@@ -1196,7 +1196,7 @@ class AnalyticsManager {
         this.setupTabNavigation();
         this.setupEventListeners();
         this.loadAnalyticsSummary();
-        this.loadVisitorLogs();
+        // this.loadVisitorLogs();
         this.loadActivityLogs();
     }
 
@@ -1220,17 +1220,17 @@ class AnalyticsManager {
 
     setupEventListeners() {
         // Visitor log pagination
-        document.getElementById('visitor-prev').addEventListener('click', () => {
-            if (this.visitorPage > 1) {
-                this.visitorPage--;
-                this.loadVisitorLogs();
-            }
-        });
+        // document.getElementById('visitor-prev').addEventListener('click', () => {
+        //     if (this.visitorPage > 1) {
+        //         this.visitorPage--;
+        //         this.loadVisitorLogs();
+        //     }
+        // });
 
-        document.getElementById('visitor-next').addEventListener('click', () => {
-            this.visitorPage++;
-            this.loadVisitorLogs();
-        });
+        // document.getElementById('visitor-next').addEventListener('click', () => {
+        //     this.visitorPage++;
+        //     this.loadVisitorLogs();
+        // });
 
         // Activity log pagination
         document.getElementById('activity-prev').addEventListener('click', () => {
@@ -1246,17 +1246,17 @@ class AnalyticsManager {
         });
 
         // Search and filter
-        document.getElementById('visitor-search').addEventListener('input', () => {
-            this.debounce(() => this.loadVisitorLogs(), 300);
-        });
+        // document.getElementById('visitor-search').addEventListener('input', () => {
+        //     this.debounce(() => this.loadVisitorLogs(), 300);
+        // });
 
         document.getElementById('activity-search').addEventListener('input', () => {
             this.debounce(() => this.loadActivityLogs(), 300);
         });
 
-        document.getElementById('visitor-type-filter').addEventListener('change', () => {
-            this.loadVisitorLogs();
-        });
+        // document.getElementById('visitor-type-filter').addEventListener('change', () => {
+        //     this.loadVisitorLogs();
+        // });
 
         document.getElementById('activity-type-filter').addEventListener('change', () => {
             this.loadActivityLogs();
@@ -1583,46 +1583,46 @@ class AnalyticsManager {
 
 
 
-    async loadVisitorLogs() {
-        try {
-            const search = document.getElementById('visitor-search').value;
-            const typeFilter = document.getElementById('visitor-type-filter').value;
+    // async loadVisitorLogs() {
+    //     try {
+    //         const search = document.getElementById('visitor-search').value;
+    //         const typeFilter = document.getElementById('visitor-type-filter').value;
             
-            let url = `/analytics/visitors/?page=${this.visitorPage}&per_page=${this.perPage}`;
-            if (search) url += `&search=${encodeURIComponent(search)}`;
-            if (typeFilter) url += `&type=${typeFilter}`;
+    //         let url = `/analytics/visitors/?page=${this.visitorPage}&per_page=${this.perPage}`;
+    //         if (search) url += `&search=${encodeURIComponent(search)}`;
+    //         if (typeFilter) url += `&type=${typeFilter}`;
             
-            const data = await this.dashboard.apiCall(url);
+    //         const data = await this.dashboard.apiCall(url);
             
-            if (data) {
-                this.renderVisitorLogs(data);
-            }
-        } catch (error) {
-            console.error('Error loading visitor logs:', error);
-        }
-    }
+    //         // if (data) {
+    //         //     this.renderVisitorLogs(data);
+    //         // }
+    //     } catch (error) {
+    //         console.error('Error loading visitor logs:', error);
+    //     }
+    // }
 
-    renderVisitorLogs(data) {
-        const tbody = document.getElementById('visitor-log-body');
-        tbody.innerHTML = data.data.map(visitor => `
-            <tr>
-                <td><span class="badge ${visitor.visitor_type}">${visitor.visitor_type}</span></td>
-                <td>${visitor.page_visited}</td>
-                <td>${visitor.os || 'N/A'}</td>
-                <td>${visitor.device || 'N/A'}</td>
-                <td>${new Date(visitor.timestamp).toLocaleString()}</td>
-                <td>${visitor.duration}s</td>
-            </tr>
-        `).join('');
+    // renderVisitorLogs(data) {
+    //     const tbody = document.getElementById('visitor-log-body');
+    //     tbody.innerHTML = data.data.map(visitor => `
+    //         <tr>
+    //             <td><span class="badge ${visitor.visitor_type}">${visitor.visitor_type}</span></td>
+    //             <td>${visitor.page_visited}</td>
+    //             <td>${visitor.os || 'N/A'}</td>
+    //             <td>${visitor.device || 'N/A'}</td>
+    //             <td>${new Date(visitor.timestamp).toLocaleString()}</td>
+    //             <td>${visitor.duration}s</td>
+    //         </tr>
+    //     `).join('');
         
-        // Update pagination info
-        document.getElementById('visitor-page-info').textContent = 
-            `Page ${data.page} of ${data.total_pages}`;
+    //     // Update pagination info
+    //     document.getElementById('visitor-page-info').textContent = 
+    //         `Page ${data.page} of ${data.total_pages}`;
         
-        // Update button states
-        document.getElementById('visitor-prev').disabled = data.page <= 1;
-        document.getElementById('visitor-next').disabled = data.page >= data.total_pages;
-    }
+    //     // Update button states
+    //     document.getElementById('visitor-prev').disabled = data.page <= 1;
+    //     document.getElementById('visitor-next').disabled = data.page >= data.total_pages;
+    // }
 
     async loadActivityLogs() {
         try {
