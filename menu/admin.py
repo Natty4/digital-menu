@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, MenuItem, Order, OrderItem, QRCode
+from .models import Category, MenuItem, Order, OrderItem, QRCode, VisitorLog, ActivityLog, DailyRevenue
 
 
 # Site header (top of the page)
@@ -38,3 +38,20 @@ class OrderAdmin(admin.ModelAdmin):
 class QRCodeAdmin(admin.ModelAdmin):
     list_display = ['table_number', 'uuid', 'created_at']
     search_fields = ['table_number']
+    
+
+@admin.register(VisitorLog)
+class VisitorLogAdmin(admin.ModelAdmin):
+    list_display = ['visitor_type', 'user_agent', 'page_visited', 'timestamp']
+    search_fields = ['visitor_type']
+    list_per_page = 30
+@admin.register(ActivityLog)
+class ActivityLogAdmin(admin.ModelAdmin):
+    list_display = ['activity_type', 'user', 'timestamp']
+    search_fields = ['details']
+    
+@admin.register(DailyRevenue)
+class DailyRevenueAdmin(admin.ModelAdmin):
+    list_display = ['id', 'total_revenue', 'total_orders', 'date']
+    search_fields = ['date']
+    
