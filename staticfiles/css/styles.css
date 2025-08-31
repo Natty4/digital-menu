@@ -19,6 +19,7 @@
   --accent: #5b3a29;
   --accent-foreground: #f7f2e7;
   --border: #3d2b1f;
+  --overlay: 29, 19, 13;
   --radius: 0.5rem;
 }
 
@@ -38,6 +39,7 @@
     --accent: #d1b39e;
     --accent-foreground: #5b3a29;
     --border: #e0d7c1;
+    --overlay: 255, 255, 255;
     --radius: 0.5rem;
   }
 }
@@ -78,6 +80,18 @@ body {
   max-width: 448px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding: 0 2rem;
+    margin: 0;
+  }
+  .search-bar-container {
+    max-width: 100% !important;
+    padding-top: 0.3rem !important;
+  }
 }
 
 .main-content {
@@ -190,6 +204,19 @@ body {
   align-items: start;
 
   will-change: scroll-position; /* Hint to browser for scrolling optimization */
+}
+@media (min-width: 768px) {
+  .menu-grid {
+    grid-template-columns: repeat(4, 1fr); /* 4 columns on larger screens */
+  }
+}
+
+/* for very large screens (optional) */
+@media (min-width: 1200px) {
+  .menu-grid {
+    grid-template-columns: repeat(4, 1fr); /* You can also keep it as 4 columns for very large screens */
+    gap: 1rem; /* Adjust gap if needed */
+  }
 }
 
 .menu-grid::-webkit-scrollbar {
@@ -1620,7 +1647,7 @@ select {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba((--overlay),0.3);
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -1638,8 +1665,8 @@ select {
 .spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #8B4513;
+    border: 5px solid var(--secondary);
+    border-top: 5px solid var(--primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 1rem;
@@ -1651,7 +1678,7 @@ select {
 }
 
 .loading-spinner p {
-    color: #5D4037;
+    color: var(--foreground);
     font-weight: 500;
     margin: 0;
 }
