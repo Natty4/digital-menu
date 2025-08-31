@@ -167,7 +167,7 @@ class ManagerDashboard {
             defaultOptions.headers['Authorization'] = `Token ${this.authToken}`;
         }
 
-        if (options.method === 'POST' && endpoint !== '/manager/login/') {
+        if (options.method === 'POST') {
             defaultOptions.headers['X-CSRFToken'] = this.getCSRFToken();
         }
         // Set Content-Type for non-FormData requests
