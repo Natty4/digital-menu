@@ -823,55 +823,61 @@ class ManagerDashboard {
   }
 
   renderOrders() {
-    const container = document.getElementById("orders-container")
-    container.innerHTML = ""
+            const container = document.getElementById("orders-container")
+            container.innerHTML = ""
 
-    this.orders.forEach((order) => {
-      const orderCard = document.createElement("div")
-      orderCard.className = `order-card ${order.status}`
-      orderCard.innerHTML = `
+            this.orders.forEach((order) => {
+              const orderCard = document.createElement("div")
+              orderCard.className = `order-card ${order.status}`
+              
+              // Format the timestamp to a readable format (assuming it's a valid date string)
+              const createdAt = new Date(order.created_at);
+              const timestamp = createdAt.toLocaleString(); // Adjust formatting as needed
+              
+              orderCard.innerHTML = `
                 <div class="order-header">
-                    <div class="order-table-number">${order.table_number}</div>
-                    <div class="order-status ${order.status}">${order.status.replace("_", " ")}</div>
+                  <div class="order-table-number">${order.table_number}</div>
+                  <div class="order-status ${order.status}">${order.status.replace("_", " ")}</div>
                 </div>
                 <div class="order-items">
-                    ${order.items
-                      .map(
-                        (item) => `
-                        <div class="order-item">
-                            <span class="order-item-name">${item.quantity}x ${item.menu_item_name}</span>
-                            <span class="order-item-price">ETB${(item.price_at_order * item.quantity).toFixed(2)}</span>
-                        </div>
-                    `,
-                      )
-                      .join("")}
+                  ${order.items
+                    .map(
+                      (item) => `
+                      <div class="order-item">
+                          <span class="order-item-name">${item.quantity}x ${item.menu_item_name}</span>
+                          <span class="order-item-price">ETB${(item.price_at_order * item.quantity).toFixed(2)}</span>
+                      </div>
+                  `,
+                    )
+                    .join("")}
                 </div>
                 <div class="order-total">
-                    <span>Total</span>
-                    <span>ETB${order.total_price}</span>
+                  <span>Total</span>
+                  <span>ETB${order.total_price}</span>
                 </div>
                 <div class="order-actions">
                     ${order.status === 'pending' || order.status === 'new' ? `
                     <button class="btn btn-sm btn-primary" onclick="manager.updateOrderStatus(${order.id}, 'in_progress')">
-                        Start Preparing
+                        <i class="fas fa-play"></i> Start Preparing
                     </button>
                     ` : ''}
                     ${order.status === 'in_progress' ? `
                     <button class="btn btn-sm btn-outline" onclick="manager.updateOrderStatus(${order.id}, 'completed')">
-                        Mark Complete
+                        <i class="fas fa-check"></i> Mark Complete
                     </button>
                     ` : ''}
                     ${order.status === 'new' || order.status === 'pending' || order.status === 'in_progress' ? `
                     <button class="btn btn-sm btn-outline danger" onclick="manager.updateOrderStatus(${order.id}, 'cancelled')">
-                        Cancel
+                        <i class="fas fa-times"></i> Cancel
                     </button>
                     ` : ''}
                     ${order.status === 'completed' || order.status === 'cancelled' ? `
                     <button class="btn btn-sm btn-outline danger-2" onclick="manager.updateOrderStatus(${order.id}, 'archived')">
-                        Archive
+                       <i class="fas fa-trash"></i> Archive
                     </button>
                     ` : ''}
                 </div>
+                <div class="order-timestamp">ordered on: ${timestamp}</div>
             `
       container.appendChild(orderCard)
     })

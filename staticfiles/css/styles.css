@@ -1399,6 +1399,7 @@ body {
 .order-actions {
   display: flex;
   gap: 0.5rem;
+  margin-bottom: 5px;
 }
 
 /* Responsive Design for Manager Dashboard */
@@ -2116,4 +2117,16 @@ select {
         height: 40px;
         font-size: 1.25rem;
     }
+}
+
+.order-timestamp {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 0.8rem;
+  font-weight: 100;
+  font-style: oblique;
+  color: var(--primary);
+  padding: 0.6rem 0.6rem 0.3rem 1.6rem;
+  display: block;
 }
