@@ -9,12 +9,21 @@ from user_agents import parse
 from django.contrib.auth.models import User
 
 
+
+class ActiveManager(models.Manager):
+	def get_queryset(self):
+		return super(ActiveManager, self).get_queryset() .filter(is_active=True)
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    
+    is_active = models.BooleanField(default=True)
     def __str__(self):
         return self.name
-
+    objects = ActiveManager()  # the custom manager
+    all = models.Manager()
+    
+    class Meta:
+        ordering = ['name']
 class MenuItem(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True)
@@ -22,6 +31,7 @@ class MenuItem(models.Model):
     image = CloudinaryField('image', null=True, blank=True, folder='menu_items')
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='menu_items')
     is_available = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
     
     @property
     def image_url(self):
@@ -44,6 +54,8 @@ class MenuItem(models.Model):
     class Meta:
         ordering = ['category']
 
+    objects = ActiveManager()  # the custom manager
+    all = models.Manager()
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -58,6 +70,7 @@ class Order(models.Model):
     table_number = models.CharField(max_length=50)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='new')
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -67,7 +80,8 @@ class Order(models.Model):
         self.total_price = sum(item.price_at_order * item.quantity for item in self.items.all())
         self.save()
 
-
+    objects = ActiveManager()  # the custom manager
+    all = models.Manager()
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
@@ -85,6 +99,8 @@ class QRCode(models.Model):
     logo_image = CloudinaryField('logo_image', null=True, blank=True, folder='qr_logos')
     
     qr_color = models.CharField(max_length=7, default='#000000')
+    
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     @staticmethod
@@ -95,6 +111,8 @@ class QRCode(models.Model):
     def __str__(self):
         return f"QR Code for Table {self.table_number}"
 
+    objects = ActiveManager()  # the custom manager
+    all = models.Manager()
 
 class VisitorLog(models.Model):
     VISITOR_TYPES = [

@@ -31,9 +31,26 @@ logger = logging.getLogger(__name__)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all() 
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Override the destroy method to set is_active=False instead of deleting the category.
+        """
+        instance = self.get_object()
+        instance.is_active = False  # Set the category to inactive
+        instance.save()
+
+        return Response({
+            'message': 'Category has been marked as inactive.'
+        }, status=status.HTTP_204_NO_CONTENT)
 
 
 class MenuItemViewSet(viewsets.ModelViewSet):
@@ -47,7 +64,6 @@ class MenuItemViewSet(viewsets.ModelViewSet):
         return context
 
     def create(self, request, *args, **kwargs):   
-           
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
@@ -65,7 +81,6 @@ class MenuItemViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
-        
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -84,6 +99,18 @@ class MenuItemViewSet(viewsets.ModelViewSet):
                 'details': serializer.errors or 'Invalid data provided'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Override the destroy method to set is_active=False instead of deleting the item.
+        """
+        instance = self.get_object()
+        instance.is_active = False  # Set the item to inactive
+        instance.is_available = False
+        instance.save()
+
+        return Response({
+            'message': 'Menu item has been marked as inactive.'
+        }, status=status.HTTP_204_NO_CONTENT)
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().prefetch_related('items')
@@ -383,7 +410,7 @@ def analytics_summary(request):
     visitors = VisitorLog.objects.filter(timestamp__range=(start_date, end_date))
     total_visitors = visitors.count()
     total_anonymous = visitors.filter(visitor_type='anonymous').count()
-    total_customers = visitors.filter(visitor_type='customer').filter(page_visited__in=['/', '/api/menu/']).count()
+    total_customers = visitors.filter(visitor_type='customer', page_visited__in=['/', '/api/menu/']).count()
     total_managers = visitors.filter(visitor_type='manager').count()
     
     # Order statistics - only completed orders
