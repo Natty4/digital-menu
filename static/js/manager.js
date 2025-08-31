@@ -670,8 +670,8 @@ class ManagerDashboard {
               <div class="qr-item-content">
                   <h4>${qr.table_number}</h4>
                   <img src="${qr.qr_code_url}" alt="QR Code for Table ${qr.table_number}" class="qr-image" />
-                  <button class="btn-download">Download <i class="fas fa-download"></i></button>
-                  <button class="btn-print">Print <i class="fas fa-print"></i></button>
+                  <button class="btn-download"><i class="fas fa-download"></i> Download</button>
+                  <button class="btn-print"><i class="fas fa-print"></i> Print</button>
               </div>
           `;
           
