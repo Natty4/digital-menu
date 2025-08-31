@@ -36,7 +36,7 @@ class Command(BaseCommand):
         #     ]
 
         #     for cat_data in categories_data:
-        #         category, created = Category.objects.get_or_create(
+        #         category, created = Category.all.get_or_create(
         #             name__iexact=cat_data['name'],  # Case-insensitive lookup
         #             defaults={'name': cat_data['name']}
         #         )
@@ -100,12 +100,12 @@ class Command(BaseCommand):
 
         #     for item_data in menu_items_data:
         #         try:
-        #             category = Category.objects.get(name__iexact=item_data['category'])
+        #             category = Category.all.get(name__iexact=item_data['category'])
         #         except ObjectDoesNotExist:
         #             self.stdout.write(self.style.ERROR(f"Category '{item_data['category']}' not found for menu item '{item_data['name']}'"))
         #             continue
 
-        #         menu_item, created = MenuItem.objects.get_or_create(
+        #         menu_item, created = MenuItem.all.get_or_create(
         #             name__iexact=item_data['name'], 
         #             defaults={
         #                 'name': item_data['name'],

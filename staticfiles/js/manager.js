@@ -139,10 +139,7 @@ class ManagerDashboard {
 
   // Show loading indicator
   showLoading() {
-      this.activeRequests++;
-      if (this.activeRequests === 1) {
-          document.getElementById('loading-overlay').classList.remove('hidden');
-      }
+      document.getElementById('loading-overlay').classList.remove('hidden');
   }
 
   // Hide loading indicator
@@ -152,6 +149,7 @@ class ManagerDashboard {
           document.getElementById('loading-overlay').classList.add('hidden');
       }
   }
+
   
   // API Functions
   async apiCall(endpoint, options = {}, requireAuth = true) {
