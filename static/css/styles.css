@@ -167,7 +167,7 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 10rem;
+  padding-bottom: 12rem;
   align-items: start;
 
   will-change: scroll-position; /* Hint to browser for scrolling optimization */
