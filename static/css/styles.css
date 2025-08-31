@@ -29,7 +29,7 @@
 }
 
 html, body {
-  height: 100%;
+  height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -109,7 +109,7 @@ body {
 /* Category Section */
 .category-section {
   position: sticky;
-  top: 120px;
+  top: 0px;
   z-index: 30;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -163,8 +163,6 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
-  min-height: 80vh;
-  max-height: 80vh;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -1546,7 +1544,10 @@ select {
     padding: 0.1rem 0.5rem;
     max-width: 448px;   
     width: 100%;       
-    margin: 0 auto;     
+    margin: 0 auto;   
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);  
 }
 
 .search-bar {
