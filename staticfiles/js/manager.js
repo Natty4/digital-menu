@@ -706,52 +706,58 @@ class ManagerDashboard {
 
   // Update setupNavigation to include logout
   setupNavigation() {
-      const navItems = document.querySelectorAll(".nav-item");
-      const sections = document.querySelectorAll(".manager-section");
+    const navItems = document.querySelectorAll(".nav-item");
+    const sections = document.querySelectorAll(".manager-section");
 
-      navItems.forEach((item) => {
-          item.addEventListener("click", () => {
-              const sectionName = item.dataset.section;
+    navItems.forEach((item) => {
+        item.addEventListener("click", () => {
+            const sectionName = item.dataset.section;
 
-              // Update active nav item
-              navItems.forEach((nav) => nav.classList.remove("active"));
-              item.classList.add("active");
+            // Update nav UI
+            navItems.forEach((nav) => nav.classList.remove("active"));
+            item.classList.add("active");
 
-              // Update active section
-              sections.forEach((section) => section.classList.remove("active"));
-              document.getElementById(`${sectionName}-section`).classList.add("active");
+            // Update section visibility
+            sections.forEach((section) => section.classList.remove("active"));
+            document.getElementById(`${sectionName}-section`).classList.add("active");
 
-              this.currentSection = sectionName;
+            this.currentSection = sectionName;
 
-              // Initialize analytics if switching to analytics section
-              if (sectionName === 'analytics') {
-                  this.analyticsManager = new AnalyticsManager(this);
-                  this.analyticsManager.setupAnalytics();
-              }
-              
-              // Refresh data when switching to orders section
-              if (sectionName === 'orders') {
-                  this.fetchOrders();
-              }
-          });
-      });
+            // Analytics
+            if (sectionName === 'analytics') {
+                this.analyticsManager = new AnalyticsManager(this);
+                this.analyticsManager.setupAnalytics();
+            }
 
-      // Back to menu button
-      const backButton = document.getElementById("back-to-menu");
-      if (backButton) {
-          backButton.addEventListener("click", () => {
-              window.location.href = "/";
-          });
-      }
+            // Orders section logic
+            if (sectionName === 'orders') {
+                this.fetchOrders();
+                this.setupOrderManagement(); // Start auto-refresh
+            } else {
+                // Stop auto-refresh when leaving orders section
+                if (this._stopOrderInterval) {
+                    this._stopOrderInterval();
+                }
+            }
+        });
+    });
 
-      // Logout button
-      const logoutBtn = document.getElementById("logout-btn");
-      if (logoutBtn) {
-          logoutBtn.addEventListener("click", () => {
-              this.logout();
-          });
-      }
-  }
+    // Back to menu button
+    const backButton = document.getElementById("back-to-menu");
+    if (backButton) {
+        backButton.addEventListener("click", () => {
+            window.location.href = "/";
+        });
+    }
+
+    // Logout button
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            this.logout();
+        });
+    }
+}
 
   renderMenuTable() {
     const tbody = document.getElementById("menu-table-body")
@@ -1176,12 +1182,45 @@ class ManagerDashboard {
   }
 
   setupOrderManagement() {
-    // Refresh orders every 30 seconds
-    setInterval(() => {
+    const startInterval = () => {
+        if (this.orderRefreshInterval) return; // Prevent multiple intervals
+
+          this.orderRefreshInterval = setInterval(() => {
+              if (this.currentSection === 'orders' && !document.hidden) {
+                  this.fetchOrders();
+              }
+          }, 30000); // Every 30 seconds
+      };
+
+      const stopInterval = () => {
+          if (this.orderRefreshInterval) {
+              clearInterval(this.orderRefreshInterval);
+              this.orderRefreshInterval = null;
+          }
+      };
+
+      // Save functions so we can use them in event listeners or elsewhere
+      this._startOrderInterval = startInterval;
+      this._stopOrderInterval = stopInterval;
+
+      // Start interval if currently in the orders section
       if (this.currentSection === 'orders') {
-        this.fetchOrders()
+          startInterval();
       }
-    }, 30000)
+
+      // Set up visibility change handler once
+      if (!this._hasVisibilityHandler) {
+          document.addEventListener('visibilitychange', () => {
+              if (this.currentSection === 'orders') {
+                  if (document.hidden) {
+                      stopInterval();
+                  } else {
+                      startInterval();
+                  }
+              }
+          });
+          this._hasVisibilityHandler = true;
+      }
   }
 }
 
