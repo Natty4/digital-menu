@@ -854,12 +854,12 @@ class ManagerDashboard {
                 </div>
                 <div class="order-actions">
                     ${order.status === 'pending' || order.status === 'new' ? `
-                    <button class="btn btn-sm btn-primary" onclick="manager.updateOrderStatus(${order.id}, 'in_progress')">
+                    <button class="btn btn-sm  success" onclick="manager.updateOrderStatus(${order.id}, 'in_progress')">
                         <i class="fas fa-play"></i> Start Preparing
                     </button>
                     ` : ''}
                     ${order.status === 'in_progress' ? `
-                    <button class="btn btn-sm btn-outline" onclick="manager.updateOrderStatus(${order.id}, 'completed')">
+                    <button class="btn btn-sm btn-primary " onclick="manager.updateOrderStatus(${order.id}, 'completed')">
                         <i class="fas fa-check"></i> Mark Complete
                     </button>
                     ` : ''}
@@ -1027,7 +1027,7 @@ class ManagerDashboard {
   updateStats() {
     const today = new Date().toDateString()
     const todayOrders = this.orders.filter((order) => {
-      const orderDate = new Date(order.created_at).toDateString()
+      const orderDate = new Date(order.updated_at).toDateString()
       return orderDate === today && order.status !== 'cancelled' || order.status === 'archived'
     })
 
