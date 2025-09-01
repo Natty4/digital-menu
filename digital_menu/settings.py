@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
+    'corsheaders',
     
     # Third party apps
     'rest_framework',
@@ -139,15 +140,17 @@ if DEBUG:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 else:
     DEFAULT_FILE_STORAGE = 'storages.backends.cloudinary.CloudinaryStorage'
+    # DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     
 # Cloudinary configuration
 cloudinary_config = {
     'cloud_name': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'api_key': os.getenv('CLOUDINARY_API_KEY'),
     'api_secret': os.getenv('CLOUDINARY_API_SECRET'),
+    
 }
 
-config(**cloudinary_config)
+config(**cloudinary_config, secure=True)
 
 SUPERUSER_PASSWORD = os.getenv('SUPERUSER_PASSWORD', 'admin')
 
@@ -156,3 +159,6 @@ USER_AGENTS_CACHE = 'default'
 MIDDLEWARE.insert(-1, 'django_user_agents.middleware.UserAgentMiddleware')
 MIDDLEWARE.insert(-1, 'menu.middleware.VisitorTrackingMiddleware')
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ['Authorization', 'Content-Type', 'X-CSRFToken']
+MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')

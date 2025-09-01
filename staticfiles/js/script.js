@@ -165,7 +165,6 @@ async function apiCall(url, options = {}) {
               },
               body: JSON.stringify(orderData)
           });
-          
           return order;
       } catch (error) {
           console.error('Error placing order:', error);
@@ -316,7 +315,7 @@ async function apiCall(url, options = {}) {
       cartOverlay.classList.add("hidden")
       return
     }
-    
+
     cartOverlay.classList.remove("hidden")
     cartButton.classList.remove("hidden")
     cartBadge.textContent = getTotalItems()
@@ -442,7 +441,7 @@ async function apiCall(url, options = {}) {
 
     try {
       const order = await placeOrder(orderData);
-      showToast("Order placed successfully! Your order number is #" + order.id, 'success');
+      showToast("Order placed successfully! Your order number is #" + order.table_number + '-' + order.id, 'success');
       cart = [];
       renderCart();
       cartOverlay.classList.add("hidden");

@@ -5,6 +5,7 @@ from django.db import models
 from django.conf import settings
 from cloudinary.models import CloudinaryField
 from django.utils import timezone
+from urllib.parse import urlparse
 from user_agents import parse
 from django.contrib.auth.models import User
 
@@ -24,6 +25,8 @@ class Category(models.Model):
     
     class Meta:
         ordering = ['name']
+
+
 class MenuItem(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True)
@@ -36,8 +39,12 @@ class MenuItem(models.Model):
     @property
     def image_url(self):
         if self.image:
-            # CloudinaryField automatically provides url property
-            return self.image.url
+            image_url = self.image.url
+            # Force HTTPS if the URL is served over HTTP
+            parsed_url = urlparse(image_url)
+            if parsed_url.scheme != 'https':
+                image_url = image_url.replace('http://', 'https://')
+            return image_url
         return None
     
     def __str__(self):
@@ -51,6 +58,7 @@ class MenuItem(models.Model):
             except:
                 pass  # Ignore errors if image doesn't exist on Cloudinary
         super().delete(*args, **kwargs)
+    
     class Meta:
         ordering = ['category']
 

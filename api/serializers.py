@@ -27,28 +27,22 @@ class MenuItemSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.image.url) if request else obj.image.url
         return None
 
-    def create(self, validated_data):
-        print("CREATE VALIDATED DATA:", validated_data)  # Debug print
-        
+    def create(self, validated_data):        
         # Let Django handle the image storage (temporary fallback)
         try:
             menu_item = MenuItem.objects.create(**validated_data)
-            print("MENU ITEM CREATED SUCCESSFULLY:", menu_item.id)
             return menu_item
         except Exception as e:
             print("CREATE ERROR:", str(e))
             raise serializers.ValidationError(f"Error creating menu item: {str(e)}")
 
     def update(self, instance, validated_data):
-        print("UPDATE VALIDATED DATA:", validated_data)  # Debug print
         
         # Let Django handle the image storage (temporary fallback)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        
         try:
             instance.save()
-            print("MENU ITEM UPDATED SUCCESSFULLY:", instance.id)
             return instance
         except Exception as e:
             print("UPDATE ERROR:", str(e))
@@ -78,7 +72,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Order
-        fields = ['table_number', 'items']
+        fields = ['id','table_number', 'items']
     
     def create(self, validated_data):
         items_data = validated_data.pop('items')

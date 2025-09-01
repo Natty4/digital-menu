@@ -1,3 +1,4 @@
+import re
 import time
 from django.utils import timezone
 from .models import VisitorLog, QRCode
@@ -25,13 +26,14 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
         # Don't track admin pages or API calls (except for analytics)
         if (request.path.startswith('/admin/') or 
             request.path.startswith('/static/') or
+            request.path.startswith('/manager/') or
+            re.match(r'^/api/menu/[0-9a-fA-F-]{36}/$', request.path) or
             request.path.startswith('/media/')):
             return response
         
         # Don't track API calls except for specific endpoints we want to monitor
-        if (request.path.startswith('/api/') and 
-            not any(path in request.path for path in ['/api/menu/', '/api/orders/'])):
-            return response
+        if (request.path.startswith('/api/') and not 
+            any(path in request.path for path in ['/api/qr_codes/'])): return response
         
         # Determine visitor type and get user info
         visitor_type = 'anonymous'  # Default to anonymous
@@ -51,7 +53,8 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
                 # For managers, we'll use a combination of user ID and token for tracking
                 session_id = f"manager_{user.id}_{token_key[:8]}"
             except Token.DoesNotExist:
-                pass  # Not a valid token, will be treated as anonymous
+                visitor_type = 'anonymous'
+                token = None
         
         # Check if this is a customer with table_uuid query parameter
         if visitor_type == 'anonymous':
@@ -101,7 +104,7 @@ class VisitorTrackingMiddleware(MiddlewareMixin):
                 ip_address=self.get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', ''),
                 referrer=request.META.get('HTTP_REFERER', ''),
-                page_visited=request.path,
+                page_visited = '/manager/ - Manager page' if request.path == '/api/qr_codes/' else '/ - Menu page' if request.path == '/' else request.path,
                 table_number=table_number,
                 qr_code=qr_code,
                 duration=duration

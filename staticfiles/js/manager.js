@@ -159,7 +159,6 @@ class ManagerDashboard {
         const defaultOptions = {
             headers: {}
         };
-
         // Only add Authorization header for authenticated endpoints
         if (requireAuth && this.authToken) {
             defaultOptions.headers['Authorization'] = `Token ${this.authToken}`;
