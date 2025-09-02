@@ -1337,7 +1337,7 @@ class AnalyticsManager {
       // document.getElementById('total-customers').textContent = data.total_customers.toLocaleString();
       // document.getElementById('total-managers').textContent = data.total_managers.toLocaleString();
       document.getElementById('total-orders').textContent = data.total_orders.toLocaleString();
-      document.getElementById('total-revenue').textContent = `ETB${data.total_revenue.toLocaleString()}`;
+      document.getElementById('total-revenue').textContent = `ETB ${data.total_revenue.toLocaleString()}`;
       
       // Update popular items with more details
       const popularItemsContainer = document.getElementById('popular-items-list');

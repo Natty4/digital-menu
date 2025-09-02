@@ -91,6 +91,7 @@ class Order(models.Model):
 
     objects = ActiveManager()  # the custom manager
     all = models.Manager()
+    
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
