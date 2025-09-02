@@ -58,6 +58,7 @@ class ManagerDashboard {
       }
       return '';
     }
+
     setupLoginModal() {
         // Login button event
         document.getElementById('manager-login-btn').addEventListener('click', () => {
@@ -279,6 +280,7 @@ class ManagerDashboard {
           // Login successful
           this.authToken = data.token;
           localStorage.setItem('managerToken', this.authToken);
+          document.cookie = `manager_token=${this.authToken}; path=/; SameSite=Lax; Secure`;
           this.isAuthenticated = true;
 
           // Update UI
@@ -1330,10 +1332,10 @@ class AnalyticsManager {
     }
 
   updateSummaryCards(data) {
-      document.getElementById('total-visitors').textContent = data.total_visitors.toLocaleString();
-      document.getElementById('total-anonymous').textContent = data.total_anonymous.toLocaleString();
-      document.getElementById('total-customers').textContent = data.total_customers.toLocaleString();
-      document.getElementById('total-managers').textContent = data.total_managers.toLocaleString();
+      document.getElementById('total-visitors').textContent = data.total_customers.toLocaleString();
+      document.getElementById('total-items').textContent = data.total_items.toLocaleString();
+      // document.getElementById('total-customers').textContent = data.total_customers.toLocaleString();
+      // document.getElementById('total-managers').textContent = data.total_managers.toLocaleString();
       document.getElementById('total-orders').textContent = data.total_orders.toLocaleString();
       document.getElementById('total-revenue').textContent = `ETB${data.total_revenue.toLocaleString()}`;
       

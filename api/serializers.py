@@ -169,7 +169,7 @@ class DailyRevenueSerializer(serializers.ModelSerializer):
 
 class AnalyticsSummarySerializer(serializers.Serializer):
     total_visitors = serializers.IntegerField()
-    total_anonymous = serializers.IntegerField()
+    total_items  = serializers.IntegerField()
     total_customers = serializers.IntegerField()
     total_managers = serializers.IntegerField()
     total_orders = serializers.IntegerField()

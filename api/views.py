@@ -17,9 +17,10 @@ from django.db.models import Count, Sum, F
 from django.db.models.functions import TruncHour
 from django.utils import timezone
 from datetime import timedelta
+from menu.utils import get_client_ip 
 from menu.models import (
-    Category, MenuItem, Order, OrderItem, QRCode,
-    VisitorLog, ActivityLog, DailyRevenue, Order, MenuItem
+    Category, MenuItem, Order, QRCode,
+    VisitorLog, ActivityLog, Order, MenuItem
     )
 from api.serializers import (
     CategorySerializer, MenuItemSerializer, OrderSerializer, 
@@ -344,7 +345,25 @@ def manager_login(request):
     username = request.data.get('username')
     password = request.data.get('password')
 
+    ip = get_client_ip(request)
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    referrer = request.META.get('HTTP_REFERER', '')
+    session_id = None
+
+    if hasattr(request, 'session') and not request.session.session_key:
+        request.session.save()
+    session_id = request.session.session_key if hasattr(request, 'session') else None
+
     if not username or not password:
+        VisitorLog.objects.create(
+            visitor_type='anonymous',
+            session_id=session_id,
+            ip_address=ip,
+            user_agent=user_agent,
+            referrer=referrer,
+            page_visited='/manager/login - Missing credentials',
+            duration=0
+        )
         return Response(
             {'detail': 'Username and password are required.'},
             status=status.HTTP_400_BAD_REQUEST
@@ -352,6 +371,15 @@ def manager_login(request):
 
     user = authenticate(username=username, password=password)
     if not user:
+        VisitorLog.objects.create(
+            visitor_type='anonymous',
+            session_id=session_id,
+            ip_address=ip,
+            user_agent=user_agent,
+            referrer=referrer,
+            page_visited=f'/manager/login - Failed for "{username}"',
+            duration=0
+        )
         return Response(
             {'detail': 'Invalid credentials.'},
             status=status.HTTP_401_UNAUTHORIZED
@@ -359,21 +387,25 @@ def manager_login(request):
 
     # Create or get token
     token, created = Token.objects.get_or_create(user=user)
-    
-    # # Optional: Create a session for tracking purposes
-    # if not request.session.session_key:
-    #     request.session.create()
-    
-    # # Store manager info in session for tracking
-    # request.session['manager_id'] = user.id
-    # request.session['manager_token_prefix'] = token.key[:8]  # Store first 8 chars for reference
-    # Trigger the custom login signal
+
+    # Fire login signal (optional, already in your code)
     manager_logged_in.send(
         sender=user.__class__,
         request=request,
         user=user
     )
-    
+
+    # Track successful login
+    VisitorLog.objects.create(
+        visitor_type='manager',
+        session_id=f"manager_{user.id}_{token.key[:8]}",
+        ip_address=ip,
+        user_agent=user_agent,
+        referrer=referrer,
+        page_visited='/manager/login - Successful login',
+        duration=0
+    )
+
     return Response({
         'token': token.key,
         'message': 'Login successful.'
@@ -405,12 +437,12 @@ def analytics_summary(request):
     # Date range - last 30 days
     end_date = timezone.now()
     start_date = end_date - timedelta(days=30)
-    
+    menu_items = MenuItem.objects.all()
     # Visitor statistics
     visitors = VisitorLog.objects.filter(timestamp__range=(start_date, end_date))
     total_visitors = visitors.count()
-    total_anonymous = visitors.filter(visitor_type='anonymous').count()
-    total_customers = visitors.filter(visitor_type='customer', page_visited__in=['/', '/api/menu/']).count()
+    total_items = menu_items.count()
+    total_customers = visitors.filter(visitor_type='customer').count()
     total_managers = visitors.filter(visitor_type='manager').count()
     
     # Order statistics - only completed orders
@@ -422,7 +454,7 @@ def analytics_summary(request):
     total_revenue = orders.aggregate(total=Sum('total_price'))['total'] or 0
     
     # Popular items (aggregated by menu item with sums)
-    popular_items = MenuItem.objects.filter(
+    popular_items = menu_items.filter(
         orderitem__order__in=orders
     ).annotate(
         order_count=Count('orderitem__id', distinct=True),  # Count distinct orders
@@ -507,7 +539,7 @@ def analytics_summary(request):
     
     data = {
         'total_visitors': total_visitors,
-        'total_anonymous': total_anonymous,
+        'total_items': total_items,
         'total_customers': total_customers,
         'total_managers': total_managers,
         'total_orders': total_orders,

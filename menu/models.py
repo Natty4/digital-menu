@@ -143,7 +143,7 @@ class VisitorLog(models.Model):
     table_number = models.CharField(max_length=50, blank=True, null=True)
     qr_code = models.ForeignKey('QRCode', on_delete=models.SET_NULL, null=True, blank=True)
     timestamp = models.DateTimeField(default=timezone.now)
-    duration = models.IntegerField(default=0)  # in seconds
+    duration = models.FloatField(help_text="Duration in seconds", null=True, blank=True)
     
     class Meta:
         ordering = ['-timestamp']

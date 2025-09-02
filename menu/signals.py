@@ -4,6 +4,7 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out
 from .models import ActivityLog, MenuItem, Category, Order, QRCode
 from django.contrib.auth.models import User
 from api.views import manager_logged_in, manager_logged_out
+from .utils import get_client_ip
 
 @receiver(post_save, sender=MenuItem)
 def log_menu_item_activity(sender, instance, created, **kwargs):
@@ -90,10 +91,3 @@ def log_manager_logout(sender, request, user, **kwargs):
             details={'ip_address': get_client_ip(request), 'auth_type': 'token'}
         )
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
