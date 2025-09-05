@@ -431,7 +431,7 @@ def analytics_summary(request):
     start_date = end_date - timedelta(days=30)
     menu_items = MenuItem.objects.all()
     # Visitor statistics
-    visitors = VisitorLog.objects.filter(timestamp__range=(start_date, end_date))
+    visitors = VisitorLog.objects.filter(visitor_type='customer', timestamp__range=(start_date, end_date))
     total_visitors = visitors.count()
     total_items = menu_items.count()
     total_customers = visitors.filter(visitor_type='customer').count()
