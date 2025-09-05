@@ -173,24 +173,21 @@ class QRCodeViewSet(viewsets.ModelViewSet):
 
         table_number = serializer.validated_data['table_number']
         qr_color = serializer.validated_data.get('qr_color', '#000000')
-        logo = serializer.validated_data.get('logo')  # Optional logo file
+        logo = serializer.validated_data.get('logo')
 
         try:
-            # Generate UUID and URL
-            qr_uuid = QRCode.make_uuid()
-            frontend_url = f"{settings.FRONTEND_URL}?table_uuid={qr_uuid}"
-
-            # Create the QR code instance
+            # Create QRCode object (uuid will be auto-generated in save())
             qr_code = QRCode.objects.create(
-                uuid=qr_uuid,
                 table_number=table_number,
                 qr_color=qr_color
             )
 
-            # Handle logo upload to Cloudinary if provided
+            # Build the frontend URL with the trimmed UUID
+            frontend_url = f"{settings.FRONTEND_URL}?table_uuid={qr_code.uuid}"
+
+            # Handle logo upload (optional)
             if logo:
                 try:
-                    # Validate file type
                     valid_formats = ['image/png', 'image/jpeg', 'image/jpg']
                     if logo.content_type not in valid_formats:
                         return Response(
@@ -198,13 +195,11 @@ class QRCodeViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST
                         )
 
-                    # Upload logo to Cloudinary
                     upload_result = cloudinary.uploader.upload(
                         logo,
                         folder='qr_logos',
                         resource_type='image'
                     )
-                    # Save the Cloudinary public ID to logo_image field
                     qr_code.logo_image = upload_result['public_id']
                     qr_code.save()
                 except Exception as e:
@@ -214,7 +209,7 @@ class QRCodeViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-            # Generate the QR code image
+            # Generate QR code
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -224,13 +219,11 @@ class QRCodeViewSet(viewsets.ModelViewSet):
             qr.add_data(frontend_url)
             qr.make(fit=True)
 
-            # Create QR code image
             qr_img = qr.make_image(fill_color=qr_color, back_color="white").convert('RGB')
 
-            # Add the logo if available
+            # Add logo (if present)
             if qr_code.logo_image:
                 try:
-                    # Fetch the logo image from Cloudinary
                     logo_url = cloudinary.utils.cloudinary_url(qr_code.logo_image)[0]
                     logo_response = requests.get(logo_url)
                     logo_img = Image.open(BytesIO(logo_response.content))
@@ -245,7 +238,7 @@ class QRCodeViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-            # Save QR code image to Cloudinary
+            # Upload QR image to Cloudinary
             try:
                 buffer = BytesIO()
                 qr_img.save(buffer, format='PNG')
@@ -264,7 +257,7 @@ class QRCodeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-            # Serialize the response
+            # Return response
             response_serializer = QRCodeSerializer(qr_code, context={'request': request})
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -273,8 +266,7 @@ class QRCodeViewSet(viewsets.ModelViewSet):
             return Response(
                 {"detail": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-            
+            )      
 
 @api_view(['GET'])
 @permission_classes([AllowAny])

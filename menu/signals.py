@@ -58,19 +58,21 @@ def log_qr_activity(sender, instance, created, **kwargs):
 
 @receiver(user_logged_in)
 def log_user_login(sender, request, user, **kwargs):
-    ActivityLog.objects.create(
-        activity_type='login',
-        user=user,
-        details={'ip_address': get_client_ip(request)}
-    )
+    if not user.is_superuser:
+        ActivityLog.objects.create(
+            activity_type='login',
+            user=user,
+            details={'ip_address': get_client_ip(request)}
+        )
 
 @receiver(user_logged_out)
 def log_user_logout(sender, request, user, **kwargs):
-    ActivityLog.objects.create(
-        activity_type='logout',
-        user=user,
-        details={'ip_address': get_client_ip(request)}
-    )
+    if not user.is_superuser:
+        ActivityLog.objects.create(
+            activity_type='logout',
+            user=user,
+            details={'ip_address': get_client_ip(request)}
+        )
     
 # Add new signals for token-based authentication
 @receiver(manager_logged_in)

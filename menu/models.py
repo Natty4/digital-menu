@@ -102,27 +102,23 @@ class OrderItem(models.Model):
         return f"{self.quantity}x {self.menu_item.name} for Order #{self.order.id}"
 
 class QRCode(models.Model):
-    uuid = models.UUIDField(unique=True, default=uuid.uuid4)
+    uuid = models.CharField(max_length=8, unique=True, default='', editable=False)
     table_number = models.CharField(max_length=50, unique=True)
 
     image = CloudinaryField('image', null=True, blank=True, folder='qr_codes')
     logo_image = CloudinaryField('logo_image', null=True, blank=True, folder='qr_logos')
-    
     qr_color = models.CharField(max_length=7, default='#000000')
-    
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    @staticmethod
-    def make_uuid():
-        """Static method to generate UUID"""
-        return uuid.uuid4()
-
-    def __str__(self):
-        return f"QR Code for Table {self.table_number}"
-
-    objects = ActiveManager()  # the custom manager
-    all = models.Manager()
+    def save(self, *args, **kwargs):
+        if not self.uuid:
+            while True:
+                trimmed_uuid = uuid.uuid4().hex[:8]
+                if not QRCode.objects.filter(uuid=trimmed_uuid).exists():
+                    self.uuid = trimmed_uuid
+                    break
+        super().save(*args, **kwargs)
 
 class VisitorLog(models.Model):
     VISITOR_TYPES = [
