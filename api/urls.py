@@ -18,7 +18,7 @@ router.register(r'qr_codes', QRCodeViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('menu/', menu_list, name='menu-list'),
-    path('menu/<uuid:uuid>/', menu_by_uuid, name='menu-by-uuid'),
+    path('menu/<str:uuid>/', menu_by_uuid, name='menu-by-uuid'),
    
     # Auth
     path('manager/login/', manager_login, name='manager-login'),
