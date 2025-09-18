@@ -27,8 +27,7 @@ class ManagerDashboard {
     }
 
 
-    initializeDashboard() {
-        // Only initialize the dashboard if authenticated
+    async initializeDashboard() {
         if (!this.isAuthenticated) return;
         
         this.setupNavigation();
@@ -36,8 +35,9 @@ class ManagerDashboard {
         this.setupCategoryManagement();
         this.setupQRGenerator();
         this.setupOrderManagement();
-        this.fetchMenuItems();
-        this.fetchCategories();
+        await this.fetchMenuItems();
+        await this.fetchCategories();
+
         this.fetchOrders();
         this.updateStats();
         this.fetchQRCodeList();
@@ -901,10 +901,13 @@ async fetchCategories() {
     const container = document.getElementById("category-tabs-container");
     container.innerHTML = "";
 
+    // Ensure menuItems is at least an empty array
+    const menuItems = this.menuItems || [];
+
     // Count items per category
     const counts = {};
     this.categories.forEach(cat => {
-        counts[cat.id] = this.menuItems.filter(i => i.category_details?.id == cat.id).length;
+        counts[cat.id] = menuItems.filter(i => i.category_details?.id == cat.id).length;
     });
 
     // "All" tab
@@ -929,6 +932,7 @@ async fetchCategories() {
 
         const nameSpan = document.createElement("span");
         nameSpan.textContent = `${cat.name} (${counts[cat.id] || 0})`;
+        
 
         const moreBtn = document.createElement("span");
         moreBtn.className = "category-more";
