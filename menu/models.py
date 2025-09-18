@@ -119,6 +119,9 @@ class QRCode(models.Model):
                     self.uuid = trimmed_uuid
                     break
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.table_number}"
 
 class VisitorLog(models.Model):
     VISITOR_TYPES = [

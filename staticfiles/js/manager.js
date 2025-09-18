@@ -331,26 +331,46 @@ class ManagerDashboard {
       }
   }
     
-  async fetchMenuItems() {
-      try {
-          const data = await this.apiCall('/menu_items/');
-          if (data) {
-              this.menuItems = data.results || data;
-              this.renderMenuTable();
-          }
-      } catch (error) {
-          console.error('Failed to fetch menu items:', error);
-          this.showToast('Failed to refresh menu. Please try again.');
-      }
-  }
+//   async fetchMenuItems() {
+//       try {
+//           const data = await this.apiCall('/menu_items/');
+//           if (data) {
+//               this.menuItems = data.results || data;
+//               this.renderMenuTable();
+//           }
+//       } catch (error) {
+//           console.error('Failed to fetch menu items:', error);
+//           this.showToast('Failed to refresh menu. Please try again.');
+//       }
+//   }
 
-  async fetchCategories() {
-    const data = await this.apiCall('/categories/')
+async fetchMenuItems() {
+  try {
+    const data = await this.apiCall('/menu_items/');
     if (data) {
-      this.categories = data.results || data
-      this.renderCategoryTable()
+      this.menuItems = data.results || data;
+      this.renderMenuItems();
     }
+  } catch (error) {
+    this.showToast('Failed to load menu items.');
   }
+}
+
+//   async fetchCategories() {
+//     const data = await this.apiCall('/categories/')
+//     if (data) {
+//       this.categories = data.results || data
+//       this.renderCategoryTable()
+//     }
+//   }
+
+async fetchCategories() {
+  const data = await this.apiCall('/categories/');
+  if (data) {
+    this.categories = data.results || data;
+    this.renderCategoryTabs();
+  }
+}
 
   async fetchOrders() {
     const data = await this.apiCall('/orders/')
@@ -761,71 +781,210 @@ class ManagerDashboard {
     }
 }
 
-  renderMenuTable() {
-    const tbody = document.getElementById("menu-table-body")
-    tbody.innerHTML = ""
+//   renderMenuTable() {
+//     const tbody = document.getElementById("menu-table-body")
+//     tbody.innerHTML = ""
 
-    this.menuItems.forEach((item) => {
-      const row = document.createElement("tr")
-      row.innerHTML = `
-                <td>
-                    <div class="item-info">
-                        <div class="item-thumbnail">
-                            <img src="${item.image_url || 'https://plakarestaurant.ca/wp-content/themes/twentytwentythree-child/img/food-placeholder.png'}" alt="${item.name}" />
-                        </div>
-                        <div class="item-details">
-                            <h4>${item.name}</h4>
-                            <p>${item.description}</p>
-                        </div>
-                    </div>
-                </td>
-                <td>ETB${item.price}</td>
-                <td>${item.category_details ? item.category_details.name : 'Uncategorized'}</td>
-                <td>
-                    <div class="availability-toggle">
-                        <div class="toggle-switch ${item.is_available ? "active" : ""}" 
-                             onclick="manager.toggleAvailability(${item.id})">
-                        </div>
-                        <span>${item.is_available ? "Available" : "Unavailable"}</span>
-                    </div>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline" onclick="manager.editItem(${item.id})">
-                            Edit
-                        </button>
-                        <button class="btn btn-sm btn-outline danger" onclick="manager.deleteItem(${item.id})">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            `
-      tbody.appendChild(row)
-    })
-  }
+//     this.menuItems.forEach((item) => {
+//       const row = document.createElement("tr")
+//       row.innerHTML = `
+//                 <td>
+//                     <div class="item-info">
+//                         <div class="item-thumbnail">
+//                             <img src="${item.image_url || 'https://plakarestaurant.ca/wp-content/themes/twentytwentythree-child/img/food-placeholder.png'}" alt="${item.name}" />
+//                         </div>
+//                         <div class="item-details">
+//                             <h4>${item.name}</h4>
+//                             <p>${item.description}</p>
+//                         </div>
+//                     </div>
+//                 </td>
+//                 <td>ETB${item.price}</td>
+//                 <td>${item.category_details ? item.category_details.name : 'Uncategorized'}</td>
+//                 <td>
+//                     <div class="availability-toggle">
+//                         <div class="toggle-switch ${item.is_available ? "active" : ""}" 
+//                              onclick="manager.toggleAvailability(${item.id})">
+//                         </div>
+//                         <span>${item.is_available ? "Available" : "Unavailable"}</span>
+//                     </div>
+//                 </td>
+//                 <td>
+//                     <div class="action-buttons">
+//                         <button class="btn btn-sm btn-outline" onclick="manager.editItem(${item.id})">
+//                             Edit
+//                         </button>
+//                         <button class="btn btn-sm btn-outline danger" onclick="manager.deleteItem(${item.id})">
+//                             Delete
+//                         </button>
+//                     </div>
+//                 </td>
+//             `
+//       tbody.appendChild(row)
+//     })
+//   }
 
-  renderCategoryTable() {
-    const tbody = document.getElementById("category-table-body")
-    tbody.innerHTML = ""
+  renderMenuItems(activeCategory = "all") {
+    const container = document.getElementById("menu-items-list");
+    container.innerHTML = "";
 
-    this.categories.forEach((cat) => {
-      const row = document.createElement("tr")
-      row.innerHTML = `
-                <td>${cat.name}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline" onclick="manager.editCategory('${cat.id}')">
-                            Edit
-                        </button>
-                        <button class="btn btn-sm btn-outline danger" onclick="manager.deleteCategory('${cat.id}')">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            `
-      tbody.appendChild(row)
-    })
-  }
+    const filtered = activeCategory === "all"
+        ? this.menuItems
+        : this.menuItems.filter(i => i.category_details?.id == activeCategory);
+
+    filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "menu-item-card";
+
+        card.innerHTML = `
+        <img src="${item.image_url || 'https://plakarestaurant.ca/wp-content/themes/twentytwentythree-child/img/food-placeholder.png'}" alt="${item.name}" />
+        <div class="menu-item-info">
+            <h4>${item.name}</h4>
+            <p>${item.description || ""}</p>
+            <strong>ETB${item.price}</strong>
+            <div class="availability">
+            ${item.is_available ? "Available" : "Unavailable"}
+            </div>
+        </div>
+        <div class="menu-item-actions">
+            <i class="fas fa-edit" title="Edit" onclick="manager.editItem(${item.id})"></i>
+            <i class="fas fa-trash" title="Delete" onclick="manager.deleteItem(${item.id})"></i>
+        </div>
+        `;
+        container.appendChild(card);
+    });
+
+    // Dynamic "Add Item" card
+    const addCard = document.createElement("div");
+    addCard.className = "add-item-card";
+
+    let categoryName = "All";
+    if (activeCategory !== "all") {
+        const cat = this.categories.find(c => c.id == activeCategory);
+        if (cat) categoryName = cat.name;
+    }
+
+    addCard.textContent = `+ Add Item for ${categoryName}`;
+    // addCard.onclick = () => document.getElementById("add-menu-item").click();
+    addCard.onclick = () => {
+        const catId = activeCategory !== "all" ? activeCategory : null
+        this.openItemModal(null, catId)
+        }
+
+    container.appendChild(addCard);
+    }
+
+//   renderCategoryTable() {
+//     const tbody = document.getElementById("category-table-body")
+//     tbody.innerHTML = ""
+
+//     this.categories.forEach((cat) => {
+//       const row = document.createElement("tr")
+//       row.innerHTML = `
+//                 <td>${cat.name}</td>
+//                 <td>
+//                     <div class="action-buttons">
+//                         <button class="btn btn-sm btn-outline" onclick="manager.editCategory('${cat.id}')">
+//                             Edit
+//                         </button>
+//                         <button class="btn btn-sm btn-outline danger" onclick="manager.deleteCategory('${cat.id}')">
+//                             Delete
+//                         </button>
+//                     </div>
+//                 </td>
+//             `
+//       tbody.appendChild(row)
+//     })
+//   }
+
+ renderCategoryTabs() {
+    const container = document.getElementById("category-tabs-container");
+    container.innerHTML = "";
+
+    // Count items per category
+    const counts = {};
+    this.categories.forEach(cat => {
+        counts[cat.id] = this.menuItems.filter(i => i.category_details?.id == cat.id).length;
+    });
+
+    // "All" tab
+    const allBtn = document.createElement("div");
+    allBtn.className = "category-tab active";
+    allBtn.dataset.category = "all";
+    allBtn.textContent = `All (${this.menuItems.length})`;
+    allBtn.addEventListener("click", () => {
+        document.querySelectorAll(".category-tab").forEach(t => t.classList.remove("active"));
+        allBtn.classList.add("active");
+        this.renderMenuItems("all");
+        // Hide any open dropdowns
+        document.querySelectorAll(".category-more-menu").forEach(d => d.classList.add("hidden"));
+    });
+    container.appendChild(allBtn);
+
+    // Each category
+    this.categories.forEach(cat => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "category-tab";
+        wrapper.dataset.category = cat.id;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = `${cat.name} (${counts[cat.id] || 0})`;
+
+        const moreBtn = document.createElement("span");
+        moreBtn.className = "category-more";
+        moreBtn.innerHTML = `<i class="fas fa-ellipsis-v"></i>`;
+
+        // Dropdown menu hidden by default
+        const dropdown = document.createElement("div");
+        dropdown.className = "category-more-menu hidden";
+        dropdown.innerHTML = `
+            <div class="menu-item" onclick="manager.editCategory('${cat.id}')"><i class="fas fa-edit" title="Edit"></i> Edit</div>
+            <div class="menu-item" onclick="manager.deleteCategory('${cat.id}')"><i class="fas fa-trash" title="Delete"></i> Delete</div>
+        `;
+        moreBtn.appendChild(dropdown);
+
+        // Toggle dropdown on click
+        moreBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            // Hide all other dropdowns first
+            document.querySelectorAll(".category-more-menu").forEach(d => {
+                if (d !== dropdown) d.classList.add("hidden");
+            });
+            dropdown.classList.toggle("hidden");
+        });
+
+        wrapper.appendChild(nameSpan);
+        wrapper.appendChild(moreBtn);
+
+        wrapper.addEventListener("click", () => {
+            document.querySelectorAll(".category-tab").forEach(t => t.classList.remove("active"));
+            wrapper.classList.add("active");
+            this.renderMenuItems(cat.id);
+            // Hide any open dropdowns
+            document.querySelectorAll(".category-more-menu").forEach(d => d.classList.add("hidden"));
+        });
+
+        container.appendChild(wrapper);
+    });
+
+    // Floating "+" tab
+    const addTab = document.createElement("div");
+    addTab.className = "category-tab add-tab";
+    addTab.textContent = "+";
+    addTab.title = "Add Category";
+    addTab.onclick = () => this.openCategoryModal();
+    container.appendChild(addTab);
+
+    // Click anywhere outside to close dropdowns
+    document.addEventListener("click", (e) => {
+        if (!e.target.closest(".category-more")) {
+            document.querySelectorAll(".category-more-menu").forEach(d => d.classList.add("hidden"));
+        }
+    });
+
+    // Default to All
+    this.renderMenuItems("all");
+}
 
   renderOrders() {
             const container = document.getElementById("orders-container")
@@ -888,41 +1047,84 @@ class ManagerDashboard {
     })
   }
 
-  openItemModal(item = null) {
-    const modal = document.getElementById("menu-item-modal")
-    const title = document.getElementById("menu-item-modal-title")
-    const select = document.getElementById("item-category-input")
-    const preview = document.getElementById("item-image-preview")
-    const previewImg = document.getElementById("item-preview-img")
+//   openItemModal(item = null) {
+//     const modal = document.getElementById("menu-item-modal")
+//     const title = document.getElementById("menu-item-modal-title")
+//     const select = document.getElementById("item-category-input")
+//     const preview = document.getElementById("item-image-preview")
+//     const previewImg = document.getElementById("item-preview-img")
 
-    // Populate categories
-    select.innerHTML = this.categories.map(cat => `
-        <option value="${cat.id}">${cat.name}</option>
-    `).join('')
+//     // Populate categories
+//     select.innerHTML = this.categories.map(cat => `
+//         <option value="${cat.id}">${cat.name}</option>
+//     `).join('')
 
-    this.editingItemId = null
+//     this.editingItemId = null
 
-    if (item) {
-      title.textContent = "Edit Item"
-      document.getElementById("item-name-input").value = item.name
-      document.getElementById("item-price-input").value = item.price
-      document.getElementById("item-description-input").value = item.description
-      select.value = item.category_details ? item.category_details.id : ""
-      document.getElementById("item-available-input").checked = item.is_available
-      previewImg.src = item.image_url
-      preview.classList.remove("hidden")
-      this.editingItemId = item.id
-    } else {
-      title.textContent = "Add New Item"
-      document.getElementById("item-name-input").value = ""
-      document.getElementById("item-price-input").value = ""
-      document.getElementById("item-description-input").value = ""
-      select.value = this.categories[0]?.id || ""
-      document.getElementById("item-available-input").checked = true
-      preview.classList.add("hidden")
-    } 
-    modal.classList.remove("hidden")
-  }
+//     if (item) {
+//       title.textContent = "Edit Item"
+//       document.getElementById("item-name-input").value = item.name
+//       document.getElementById("item-price-input").value = item.price
+//       document.getElementById("item-description-input").value = item.description
+//       select.value = item.category_details ? item.category_details.id : ""
+//       document.getElementById("item-available-input").checked = item.is_available
+//       previewImg.src = item.image_url
+//       preview.classList.remove("hidden")
+//       this.editingItemId = item.id
+//     } else {
+//       title.textContent = "Add New Item"
+//       document.getElementById("item-name-input").value = ""
+//       document.getElementById("item-price-input").value = ""
+//       document.getElementById("item-description-input").value = ""
+//       select.value = this.categories[0]?.id || ""
+//       document.getElementById("item-available-input").checked = true
+//       preview.classList.add("hidden")
+//     } 
+//     modal.classList.remove("hidden")
+//   }
+
+    openItemModal(item = null, categoryId = null) {
+        const modal = document.getElementById("menu-item-modal")
+        const title = document.getElementById("menu-item-modal-title")
+        const select = document.getElementById("item-category-input")
+        const preview = document.getElementById("item-image-preview")
+        const previewImg = document.getElementById("item-preview-img")
+
+        // Populate categories
+        select.innerHTML = this.categories.map(cat => `
+            <option value="${cat.id}">${cat.name}</option>
+        `).join('')
+
+        this.editingItemId = null
+
+        if (item) {
+            title.textContent = "Edit Item"
+            document.getElementById("item-name-input").value = item.name
+            document.getElementById("item-price-input").value = item.price
+            document.getElementById("item-description-input").value = item.description
+            select.value = item.category_details ? item.category_details.id : ""
+            document.getElementById("item-available-input").checked = item.is_available
+            previewImg.src = item.image_url
+            preview.classList.remove("hidden")
+            this.editingItemId = item.id
+        } else {
+            title.textContent = "Add New Item"
+            document.getElementById("item-name-input").value = ""
+            document.getElementById("item-price-input").value = ""
+            document.getElementById("item-description-input").value = ""
+            
+            // Preselect category
+            if (categoryId) {
+            select.value = categoryId
+            } else {
+            select.value = this.categories[0]?.id || ""
+            }
+
+            document.getElementById("item-available-input").checked = true
+            preview.classList.add("hidden")
+        } 
+        modal.classList.remove("hidden")
+        }
 
   handleItemImageUpload(event) {
     const file = event.target.files[0]
@@ -1106,16 +1308,16 @@ class ManagerDashboard {
 
   // Setup methods for other components
   setupMenuManagement() {
-    const addItemBtn = document.getElementById("add-menu-item")
+    // const addItemBtn = document.getElementById("add-menu-item")
     const modal = document.getElementById("menu-item-modal")
     const closeBtn = document.getElementById("menu-item-modal-close")
     const saveBtn = document.getElementById("save-menu-item")
     const cancelBtn = document.getElementById("cancel-menu-item")
     const imageInput = document.getElementById("item-image-input")
 
-    addItemBtn.addEventListener("click", () => {
-      this.openItemModal()
-    })
+    // addItemBtn.addEventListener("click", () => {
+    //   this.openItemModal()
+    // })
 
     closeBtn.addEventListener("click", () => {
       modal.classList.add("hidden")
@@ -1141,9 +1343,7 @@ class ManagerDashboard {
     const saveBtn = document.getElementById("save-category")
     const cancelBtn = document.getElementById("cancel-category")
 
-    addCategoryBtn.addEventListener("click", () => {
-      this.openCategoryModal()
-    })
+
 
     closeBtn.addEventListener("click", () => {
       modal.classList.add("hidden")
@@ -1390,7 +1590,7 @@ class AnalyticsManager {
     }
 }
 
-  // Call this after rendering all charts
+// Call this after rendering all charts
   renderCharts(data) {
       this.renderRevenueChart(data.revenue_data);
       this.renderVisitorChart(data.visitor_data);

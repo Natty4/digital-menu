@@ -46,10 +46,6 @@
                         <span class="nav-icon"><i class="fas fa-utensils"></i></span>
                         <span class="nav-label">Menu</span>
                     </button>
-                    <button class="nav-item" data-section="categories">
-                        <span class="nav-icon"><i class="fas fa-th-large"></i></span>
-                        <span class="nav-label">Categories</span>
-                    </button>
                     <button class="nav-item" data-section="qr">
                         <span class="nav-icon"><i class="fas fa-qrcode"></i></span>
                         <span class="nav-label">QR Codes</span>
@@ -75,46 +71,17 @@
                 <div id="menu-section" class="manager-section active">
                     <div class="section-header">
                         <h1>Menu Management</h1>
-                        <button id="add-menu-item" class="btn btn-primary">+ Add New Item</button>
                     </div>
-                    
-                    <div class="menu-table-container">
-                        <table class="menu-table">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Price</th>
-                                    <th>Category</th>
-                                    <th>Available</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="menu-table-body">
-                                <!-- Menu items will be populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
 
-                <!-- Categories Management Section -->
-                <div id="categories-section" class="manager-section">
-                    <div class="section-header">
-                        <h1>Category Management</h1>
-                        <button id="add-category-btn" class="btn btn-primary">+ Add New Category</button>
+                    <!-- Category Tabs -->
+                    <div class="category-tabs">
+                        {% comment %} <button class="category-tab active" data-category="all">All</button> {% endcomment %}
+                        <div id="category-tabs-container"></div>
                     </div>
-                    
-                    <div class="category-table-container">
-                        <table class="category-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="category-table-body">
-                                <!-- Categories will be populated by JavaScript -->
-                            </tbody>
-                        </table>
+
+                    <!-- Menu Items List -->
+                    <div class="menu-items-list" id="menu-items-list">
+                        <!-- Items populated by JS -->
                     </div>
                 </div>
 
