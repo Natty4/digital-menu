@@ -842,8 +842,12 @@ async fetchCategories() {
             <h4>${item.name}</h4>
             <p>${item.description || ""}</p>
             <strong>ETB${item.price}</strong>
-            <div class="availability">
-            ${item.is_available ? "Available" : "Unavailable"}
+            
+            <div class="availability-toggle">
+                <div class="toggle-switch ${item.is_available ? "active" : ""}" 
+                     onclick="manager.toggleAvailability(${item.id})">
+                </div>
+                <span>${item.is_available ? "Available" : "Not available"}</span>
             </div>
         </div>
         <div class="menu-item-actions">

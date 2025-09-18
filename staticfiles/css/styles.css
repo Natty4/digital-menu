@@ -1133,10 +1133,10 @@ body {
 
 .toggle-switch {
   position: relative;
-  width: 44px;
-  height: 24px;
+  width: 32px; 
+  height: 18px; 
   background: #ccc;
-  border-radius: 12px;
+  border-radius: 9px; 
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -1150,15 +1150,15 @@ body {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 20px;
-  height: 20px;
+  width: 14px; 
+  height: 14px; 
   background: white;
   border-radius: 50%;
   transition: transform 0.2s ease;
 }
 
 .toggle-switch.active::after {
-  transform: translateX(20px);
+  transform: translateX(14px);
 }
 
 .action-buttons {
