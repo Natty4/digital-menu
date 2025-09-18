@@ -204,13 +204,7 @@
                                 <p>Menu Items</p>
                             </div>
                         </div>
-                        {% comment %} <div class="summary-card">
-                            <div class="card-icon">👤</div>
-                            <div class="card-content">
-                                <h3 id="total-customers">0</h3>
-                                <p>Customers</p>
-                            </div>
-                        </div> {% endcomment %}
+                      
                         <div class="summary-card">
                             <div class="card-icon">🛎️</div>
                             <div class="card-content">
@@ -221,7 +215,7 @@
                         <div class="summary-card">
                             <div class="card-icon">💰</div>
                             <div class="card-content">
-                                <h3 id="total-revenue">ETB0</h3>
+                                <h3 id="total-revenue">ETB 0</h3>
                                 <p>Revenue</p>
                             </div>
                         </div>
@@ -269,48 +263,11 @@
                     
                     <!-- Log Tabs -->
                     <div class="log-tabs">
-                        {% comment %} <button class="tab-btn active" data-tab="visitor-log">Visitor Log</button> {% endcomment %}
                         <button class="tab-btn" data-tab="activity-log">Activity Log</button>
                     </div>
                     
                     <!-- Log Containers -->
-                    <div class="log-container">
-                        {% comment %} <div id="visitor-log" class="log-content active">
-                            <div class="log-header">
-                                <h3>Visitor Logs</h3>
-                                <div class="log-controls">
-                                    <input type="text" id="visitor-search" placeholder="Search visitors...">
-                                    <select id="visitor-type-filter">
-                                        <option value="">All Types</option>
-                                        <option value="customer">Customers</option>
-                                        <option value="manager">Managers</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="log-table-container">
-                                <table class="log-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Type</th>
-                                            <th>Page</th>
-                                            <th>OS</th>
-                                            <th>Device</th>
-                                            <th>Timestamp</th>
-                                            <th>Duration</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="visitor-log-body">
-                                        <!-- Will be populated by JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="log-pagination">
-                                <button id="visitor-prev" class="pagination-btn">Previous</button>
-                                <span id="visitor-page-info">Page 1 of 1</span>
-                                <button id="visitor-next" class="pagination-btn">Next</button>
-                            </div>
-                        </div> {% endcomment %}
-                        
+                    <div class="log-container">                        
                         <div id="activity-log" class="log-content">
                             <div class="log-header">
                                 <h3>Activity Logs</h3>

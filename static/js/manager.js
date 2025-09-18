@@ -1390,7 +1390,7 @@ class AnalyticsManager {
     }
 }
 
-  // Call this after rendering all charts
+// Call this after rendering all charts
   renderCharts(data) {
       this.renderRevenueChart(data.revenue_data);
       this.renderVisitorChart(data.visitor_data);
